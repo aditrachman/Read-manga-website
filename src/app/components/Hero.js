@@ -103,11 +103,12 @@ export default function Hero() {
         </div>
 
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mt-4">
-          Baca Manga <br /> Terlengkap <br /> dan No Iklan
+          Baca Manga <br /> Terlengkap dan <br />{" "}
+          <div className=""> No Iklan</div>
         </h1>
         <p className="mt-4 text-base md:text-lg text-gray-300 max-w-md mx-auto md:mx-0">
           Website baca manga Terlengkap dan No Iklan bikin kamu baca manga
-          dengan nyaman
+          dengan nyaman.
         </p>
 
         {/* Tombol */}
