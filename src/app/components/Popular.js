@@ -2,76 +2,51 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
+import { db } from "@/app/lib/firebase"; // Assuming you have a firebase config file
 
 export default function Popular() {
-  const [mangas] = useState([
-    {
-      id: 1,
-      title: "One Piece",
-      author: "Eiichiro Oda",
-      rating: "4.8",
-      chapters: 1100,
-      image: "/cover.jpg",
-      genre: "Adventure",
-      status: "Ongoing",
-    },
-    {
-      id: 2,
-      title: "Chainsaw Man",
-      author: "Tatsuki Fujimoto",
-      rating: "4.6",
-      chapters: 135,
-      image: "/cover1.jpg",
-      genre: "Dark Fantasy",
-      status: "Ongoing",
-    },
-    {
-      id: 3,
-      title: "Jujutsu Kaisen",
-      author: "Gege Akutami",
-      rating: "4.7",
-      chapters: 250,
-      image: "/cover2.jpg",
-      genre: "Supernatural",
-      status: "Ongoing",
-    },
-    {
-      id: 4,
-      title: "My Hero Academia",
-      author: "Kohei Horikoshi",
-      rating: "4.5",
-      chapters: 420,
-      image: "/cover.jpg",
-      genre: "Superhero",
-      status: "Completed",
-    },
-    {
-      id: 5,
-      title: "Demon Slayer",
-      author: "Koyoharu Gotouge",
-      rating: "4.9",
-      chapters: 205,
-      image: "/cover1.jpg",
-      genre: "Dark Fantasy",
-      status: "Completed",
-    },
-    {
-      id: 6,
-      title: "Hunter x Hunter",
-      author: "Yoshihiro Togashi",
-      rating: "4.8",
-      chapters: 400,
-      image: "/cover2.jpg",
-      genre: "Adventure",
-      status: "Hiatus",
-    },
-  ]);
+  const [mangas, setMangas] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // State untuk carousel
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
+
+  // Fetch data from Firestore database
+  useEffect(() => {
+    const fetchMangas = async () => {
+      try {
+        const mangaRef = collection(db, "manga");
+        const q = query(mangaRef, orderBy("popularity", "asc"), limit(6)); // Order by popularity ascending (smallest first)
+        const querySnapshot = await getDocs(q);
+
+        const mangaData = querySnapshot.docs.map((doc, index) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            title: data.title || "Unknown Title",
+            author: data.author || "Unknown Author", // You might need to add this field to your database
+            rating: data.rating?.toString() || "0.0",
+            chapters: data.chapters || 0,
+            image: data.image || "/default-cover.jpg",
+            genre: Array.isArray(data.genre) ? data.genre[0] : "Unknown", // Taking first genre from array
+            status: data.status || "Unknown", // You might need to add this field
+          };
+        });
+
+        setMangas(mangaData);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching manga data:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchMangas();
+  }, []);
 
   // Fungsi untuk mendeteksi ukuran layar
   useEffect(() => {
@@ -149,7 +124,11 @@ export default function Popular() {
           </span>
         );
       default:
-        return null;
+        return (
+          <span className="px-2 py-1 text-xs rounded-full bg-gray-500 bg-opacity-20 text-gray-400 font-medium">
+            {status || "Unknown"}
+          </span>
+        );
     }
   };
 
@@ -181,6 +160,23 @@ export default function Popular() {
       </div>
     );
   };
+
+  if (loading) {
+    return (
+      <div className="py-10 px-2">
+        <main className="max-w-6xl mx-auto">
+          <h1 className="text-4xl font-bold text-center text-white mb-12 tracking-wide">
+            Popular Manga this Week
+          </h1>
+          <div className="flex justify-center">
+            <div className="animate-pulse text-white">
+              Loading manga data...
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className=" py-10 px-2 ">

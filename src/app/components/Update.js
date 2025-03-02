@@ -172,8 +172,10 @@ export default function Update() {
               <Image
                 src={manga.image}
                 alt={manga.title}
-                layout="fill"
-                objectFit="cover"
+                fill
+                style={{ objectFit: "cover" }} // Ganti objectFit style
+                sizes="(max-width: 768px) 100vw, 50vw" // Tambahkan prop sizes
+                loading="lazy" // Lazy loading
                 className="w-full h-full transition-transform duration-300 group-hover:scale-105"
                 onError={(e) => {
                   e.target.src = "/api/placeholder/240/320";

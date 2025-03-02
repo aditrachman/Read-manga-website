@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { ChevronRightIcon } from "@heroicons/react/20/solid";
+import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
+import { db } from "@/app/lib/firebase"; // Assuming you have a firebase config file
 
 export default function Hero() {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -11,6 +13,8 @@ export default function Hero() {
   const [loopNum, setLoopNum] = useState(0);
   const [typingSpeed, setTypingSpeed] = useState(150);
   const [mounted, setMounted] = useState(false);
+  const [nftCards, setNftCards] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const phrases = ["Manga", "Manhwa", "Manhua"];
   const currentTextRef = useRef("");
@@ -22,6 +26,72 @@ export default function Hero() {
     setMounted(true);
     return () => setMounted(false);
   }, []);
+
+  // Fetch data from Firestore database
+  useEffect(() => {
+    const fetchMangas = async () => {
+      try {
+        const mangaRef = collection(db, "manga");
+        const q = query(mangaRef, orderBy("rating", "desc"), limit(3)); // Order by rating descending (highest first)
+        const querySnapshot = await getDocs(q);
+
+        const mangaData = querySnapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            image: data.image || "/default-cover.jpg",
+            title: data.title || "Unknown Title",
+            rating: data.rating?.toString() || "0.0",
+            description: "Popular", // Add a generic description
+            genre: Array.isArray(data.genre)
+              ? data.genre.slice(0, 2).join(", ")
+              : "Unknown",
+            chapter: `Chapter ${data.chapters || 0}`,
+          };
+        });
+
+        setNftCards(mangaData);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching manga data:", error);
+        // Fallback to default data if there's an error
+        setNftCards([
+          {
+            id: 1,
+            image: "/cover1.jpg",
+            title: "SOLO LEVELING",
+            rating: "4.9",
+            description: "Popular 1",
+            genre: "Action, Fantasy",
+            chapter: "Chapter 179",
+          },
+          {
+            id: 2,
+            image: "/cover2.jpg",
+            title: "ONE PIECE",
+            rating: "4.8",
+            description: "Popular 2",
+            genre: "Adventure, Fantasy",
+            chapter: "Chapter 1085",
+          },
+          {
+            id: 3,
+            image: "/cover.jpg",
+            title: "NARUTO",
+            rating: "4.7",
+            description: "Popular 3",
+            genre: "Action, Adventure",
+            chapter: "Chapter 700",
+          },
+        ]);
+        setLoading(false);
+      }
+    };
+
+    if (mounted) {
+      fetchMangas();
+    }
+  }, [mounted]);
 
   // Typing effect
   useEffect(() => {
@@ -59,43 +129,14 @@ export default function Hero() {
     return () => clearTimeout(timer);
   }, [displayText, isDeleting, loopNum, fullText, typingSpeed, mounted]);
 
-  // Data cards
-  const nftCards = [
-    {
-      id: 1,
-      image: "/cover1.jpg",
-      title: "SOLO LEVELING",
-      rating: "4.9",
-      description: "Popular 1",
-      genre: "Action, Fantasy",
-      chapter: "Chapter 179",
-    },
-    {
-      id: 2,
-      image: "/cover2.jpg",
-      title: "ONE PIECE",
-      rating: "4.8",
-      description: "Popular 2",
-      genre: "Adventure, Fantasy",
-      chapter: "Chapter 1085",
-    },
-    {
-      id: 3,
-      image: "/cover.jpg",
-      title: "NARUTO",
-      rating: "4.7",
-      description: "Popular 3",
-      genre: "Action, Adventure",
-      chapter: "Chapter 700",
-    },
-  ];
-
   // Functions for carousel navigation
   const nextCard = () => {
+    if (nftCards.length === 0) return;
     setCurrentCardIndex((prevIndex) => (prevIndex + 1) % nftCards.length);
   };
 
   const prevCard = () => {
+    if (nftCards.length === 0) return;
     setCurrentCardIndex(
       (prevIndex) => (prevIndex - 1 + nftCards.length) % nftCards.length
     );
@@ -123,17 +164,17 @@ export default function Hero() {
 
   // Auto rotate carousel - client side only
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || nftCards.length === 0) return;
 
     const interval = setInterval(() => {
       nextCard();
     }, 5000); // 5 seconds for better reading time
 
     return () => clearInterval(interval);
-  }, [mounted]);
+  }, [mounted, nftCards]);
 
   // If not mounted yet (server-side), return minimal placeholder
-  if (!mounted) {
+  if (!mounted || loading || nftCards.length === 0) {
     return (
       <section className="relative w-full min-h-screen text-white flex flex-col md:flex-row items-center justify-between px-4 md:px-16 py-8 md:py-12 gap-8">
         <div className="w-full md:w-1/2 text-center md:text-left relative z-10">
@@ -143,7 +184,7 @@ export default function Hero() {
           </h1>
         </div>
         <div className="w-full md:w-1/3 flex items-center justify-center">
-          <div className="relative w-full max-w-sm h-[420px] sm:h-[480px] rounded-3xl shadow-xl overflow-hidden border border-purple-500/30">
+          <div className="relative w-full max-w-sm h-[520px] rounded-3xl shadow-xl overflow-hidden border border-purple-500/30">
             <div className="bg-gray-800 h-full w-full rounded-3xl"></div>
           </div>
         </div>
@@ -155,7 +196,7 @@ export default function Hero() {
   const currentCard = nftCards[currentCardIndex];
 
   return (
-    <section className="relative w-full min-h-screen text-white flex flex-col md:flex-row items-center justify-between px-4 md:px-16 py-8 md:py-12 gap-8">
+    <section className="relative w-full min-h-screen text-white flex flex-col md:flex-row items-center justify-between px-4 md:px-16 py-8 md:py-12 gap-4 md:gap-8">
       {/* Left: Text & Buttons */}
       <div className="w-full md:w-1/2 text-center md:text-left relative z-10">
         <div className="mt-8 sm:mt-10 lg:mt-2">
@@ -177,13 +218,13 @@ export default function Hero() {
           Baca <span className="text-purple-500">{displayText}</span> <br />{" "}
           Terlengkap dan <br /> <div className=""> No Iklan</div>
         </h1>
-        <p className="mt-4 text-base md:text-lg text-gray-300 max-w-md mx-auto md:mx-0">
+        <p className="mt-3 text-base md:text-lg text-gray-300 max-w-md mx-auto md:mx-0">
           Website baca manga Terlengkap dan No Iklan bikin kamu baca manga
           dengan nyaman.
         </p>
 
         {/* Buttons */}
-        <div className="mt-6 flex justify-center md:justify-start space-x-4">
+        <div className="mt-4 md:mt-6 flex justify-center md:justify-start space-x-4">
           <button className="rounded-md bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:opacity-80 hover:scale-105">
             Jelajahi
           </button>
@@ -194,8 +235,8 @@ export default function Hero() {
       </div>
 
       {/* Right: Card NFT - Improved for mobile and visuals */}
-      <div className="w-full md:w-1/3 flex items-center justify-center">
-        <div className="relative w-full max-w-sm h-[420px] sm:h-[480px] rounded-3xl shadow-xl overflow-hidden border border-purple-500/30">
+      <div className="w-full md:w-1/3 flex items-center justify-center mt-4 md:mt-0">
+        <div className="relative w-full max-w-sm h-[520px] rounded-3xl shadow-xl overflow-hidden border border-purple-500/30">
           {/* Glass effect container with animation */}
           <div className="relative rounded-3xl bg-gray-900/80 backdrop-blur-sm overflow-hidden h-full transform transition-all duration-500 hover:scale-[1.02] group">
             {/* Image with better loading */}
@@ -232,7 +273,7 @@ export default function Hero() {
               <div className="flex justify-between items-end mb-3">
                 <div>
                   <p className="text-indigo-300 text-sm mb-1">
-                    {currentCard.description}
+                    {currentCard.description} {currentCardIndex + 1}
                   </p>
                   <h3 className="font-bold text-xl md:text-2xl tracking-wide">
                     {currentCard.title}
