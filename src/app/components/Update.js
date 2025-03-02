@@ -1,101 +1,53 @@
-// app/manga-reader/page.js
-"use client";
-import React, { useState } from "react";
-import Image from "next/image";
+"use client"; // Pastikan menggunakan "use client" karena kita menggunakan React hooks
+import { db } from "../lib/firebase"; // Import Firebase config
+import { collection, getDocs } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import Image from "next/image"; // Add Image import since it's used in the component
 
-export default function MangaReader() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+export default function Update() {
+  const [mangas, setMangas] = useState([]); // State untuk menyimpan data manga
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // Menambahkan state untuk mobile menu
 
-  const mangas = [
-    {
-      id: 1,
-      title: "One Piece",
-      chapter: 1084,
-      lastUpdate: "3 days ago",
-      image: "/cover.jpg",
-      status: "Ongoing",
-      rating: 4.9,
-      genres: ["Action", "Adventure", "Fantasy"],
-    },
-    {
-      id: 2,
-      title: "Jujutsu Kaisen",
-      chapter: 253,
-      lastUpdate: "1 day ago",
-      image: "/cover1.jpg",
-      status: "Ongoing",
-      rating: 4.8,
-      genres: ["Action", "Supernatural", "Horror"],
-    },
-    {
-      id: 3,
-      title: "Chainsaw Man",
-      chapter: 158,
-      lastUpdate: "1 week ago",
-      image: "/cover2.jpg",
-      status: "Ongoing",
-      rating: 4.7,
-      genres: ["Action", "Supernatural", "Gore"],
-    },
-    {
-      id: 4,
-      title: "Demon Slayer",
-      chapter: 205,
-      lastUpdate: "Completed",
-      image: "/cover.jpg",
-      status: "Completed",
-      rating: 4.8,
-      genres: ["Action", "Supernatural", "Historical"],
-    },
-    {
-      id: 5,
-      title: "My Hero Academia",
-      chapter: 421,
-      lastUpdate: "2 days ago",
-      image: "/cover1.jpg",
-      status: "Ongoing",
-      rating: 4.6,
-      genres: ["Action", "Superpower", "School"],
-    },
-    {
-      id: 6,
-      title: "Tokyo Revengers",
-      chapter: 278,
-      lastUpdate: "Completed",
-      image: "/cover2.jpg",
-      status: "Completed",
-      rating: 4.5,
-      genres: ["Action", "Time Travel", "Drama"],
-    },
-    {
-      id: 7,
-      title: "Spy x Family",
-      chapter: 92,
-      lastUpdate: "3 days ago",
-      image: "/cover.jpg",
-      status: "Ongoing",
-      rating: 4.9,
-      genres: ["Action", "Comedy", "Slice of Life"],
-    },
-    {
-      id: 8,
-      title: "Berserk",
-      chapter: 373,
-      lastUpdate: "1 month ago",
-      image: "/cover1.jpg",
-      status: "Ongoing",
-      rating: 4.9,
-      genres: ["Action", "Dark Fantasy", "Horror"],
-    },
-  ];
+  // Fungsi untuk mengambil data manga dari Firestore
+  const fetchMangas = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "manga"));
+      const mangaList = querySnapshot.docs.map((doc) => {
+        // Cetak data mentah untuk debugging
+        console.log("Manga raw data:", doc.id, doc.data());
+
+        return {
+          id: doc.id, // ID dokumen
+          title: doc.data().title,
+          chapter: doc.data().chapters, // Menggunakan chapters sebagai pengganti updateAt
+          image: doc.data().image,
+          status: doc.data().status || "Ongoing", // Default status jika tidak ada
+          rating: doc.data().rating,
+          genres: doc.data().genre || [], // Default array kosong jika tidak ada
+        };
+      });
+
+      // Log untuk debugging
+      console.log("Processed manga data:", mangaList);
+
+      setMangas(mangaList); // Simpan data ke state
+    } catch (error) {
+      console.error("Error fetching manga data: ", error);
+    }
+  };
+
+  // Ambil data saat komponen pertama kali di-render
+  useEffect(() => {
+    fetchMangas();
+  }, []);
 
   return (
     <div className="min-h-screen text-white px-2 py-4 md:p-6">
-      {/* Header with Latest Update and filter/sort buttons in the same line */}
+      {/* Header dengan Latest Update dan filter/sort buttons */}
       <div className="flex justify-between items-center mb-4 md:mb-6 px-2 md:px-8">
         <h1 className="text-4xl font-bold">Latest Update</h1>
 
-        {/* Desktop view - filter and sort buttons */}
+        {/* Desktop view - filter dan sort buttons */}
         <div className="hidden lg:flex lg:gap-3">
           <div className="flex gap-2">
             <button className="bg-gradient-to-r from-purple-600 to-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-2">
@@ -136,7 +88,7 @@ export default function MangaReader() {
         </div>
       </div>
 
-      {/* Mobile menu toggle button with gradient */}
+      {/* Mobile menu toggle button */}
       <div className="lg:hidden px-2 mb-4">
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -166,7 +118,6 @@ export default function MangaReader() {
       <div
         className={`${mobileMenuOpen ? "block" : "hidden"} lg:hidden mb-4 px-2`}
       >
-        {/* Mobile filters with gradient and icons */}
         <div className="mt-2 grid grid-cols-2 gap-2">
           <button className="bg-gradient-to-r from-purple-600 to-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md flex items-center justify-center gap-2">
             <svg
@@ -205,7 +156,7 @@ export default function MangaReader() {
         </div>
       </div>
 
-      {/* Updated grid from 4 to 5 columns */}
+      {/* Grid untuk menampilkan manga */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6 px-2 md:px-8">
         {mangas.map((manga) => (
           <div
@@ -229,7 +180,7 @@ export default function MangaReader() {
                 }}
               />
 
-              {/* Status badge with glass effect */}
+              {/* Status badge */}
               <div className="absolute top-2 right-2 backdrop-blur-md bg-indigo-600/60 text-white text-xs px-2 py-1 rounded-md font-medium shadow-lg">
                 {manga.status}
               </div>
@@ -245,13 +196,16 @@ export default function MangaReader() {
             </div>
 
             <div className="relative p-3 md:p-4">
-              {/* Title with truncate */}
+              {/* Title */}
               <h3 className="text-base md:text-lg font-bold truncate text-white mb-2 group-hover:text-blue-300 transition-colors duration-300">
                 {manga.title}
               </h3>
 
               <div className="flex justify-between items-center mb-2">
-                <div className="text-xs text-gray-400">{manga.lastUpdate}</div>
+                {/* Hapus bagian lastUpdate */}
+                <div className="text-xs text-gray-400">
+                  Chapter {manga.chapter}
+                </div>
                 <div className="flex items-center gap-1">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -265,8 +219,8 @@ export default function MangaReader() {
                 </div>
               </div>
 
-              {/* Genre tags with gradient background */}
-              <div className="flex flex-wrap gap-1 mb-1">
+              {/* Genre tags */}
+              <div className="flex flex-wrap gap-1 mb-1 py-1">
                 {manga.genres.slice(0, 3).map((genre, idx) => (
                   <span
                     key={idx}
@@ -276,14 +230,12 @@ export default function MangaReader() {
                   </span>
                 ))}
               </div>
-
-              {/* "Baca Sekarang" button removed */}
             </div>
           </div>
         ))}
       </div>
 
-      {/* View All button at the bottom (desktop) */}
+      {/* View All button */}
       <div className="flex justify-center mt-8 mb-4">
         <button className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-3 rounded-lg font-medium hover:opacity-90 transition-all duration-300 hover:shadow-lg flex items-center gap-2">
           View More Manga
