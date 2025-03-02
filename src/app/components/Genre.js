@@ -1,11 +1,30 @@
 // app/components/MangaGenres.js
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 
 export default function Genre() {
   const [activeTimeframe, setActiveTimeframe] = useState("1 Day");
   const [showAllGenres, setShowAllGenres] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [imageError, setImageError] = useState({});
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsMobile(window.innerWidth < 640);
+
+      const handleResize = () => {
+        setIsMobile(window.innerWidth < 640);
+      };
+
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }
+  }, []);
+
+  const handleImageError = (id) => {
+    setImageError((prev) => ({ ...prev, [id]: true }));
+  };
 
   const topGenres = [
     {
@@ -73,23 +92,16 @@ export default function Genre() {
     },
   ];
 
-  // For mobile: display limited genres initially
-  // On desktop, always show all genres regardless of showAllGenres state
   const displayGenres =
-    showAllGenres || window.innerWidth >= 640
-      ? topGenres
-      : topGenres.slice(0, 5);
+    showAllGenres || !isMobile ? topGenres : topGenres.slice(0, 5);
 
   return (
     <div className="w-full px-2 py-4 md:p-6">
       <div className="mb-4 px-2 md:px-8">
-        {/* Header with time filters */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
           <h2 className="text-2xl md:text-3xl font-bold text-white mb-3 sm:mb-0">
             Top Genres
           </h2>
-
-          {/* Time filters - more compact on mobile */}
           <div className="flex items-center self-start sm:self-auto gap-1 sm:gap-2 bg-gray-800/40 p-1 rounded-full">
             {["1 Day", "7 Days", "30 Days"].map((timeframe) => (
               <button
@@ -107,32 +119,28 @@ export default function Genre() {
           </div>
         </div>
 
-        {/* Mobile-optimized layout for genres */}
         <div className="space-y-2 sm:space-y-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-4">
           {displayGenres.map((genre, index) => (
             <div
               key={genre.id}
               className="flex items-center p-2 sm:p-3 rounded-xl bg-gradient-to-r from-gray-800/40 to-gray-900/80 backdrop-blur-sm border border-gray-700/50 hover:border-indigo-500/30 transition-all duration-300 group"
             >
-              {/* Rank number - smaller on mobile */}
               <div className="w-5 mr-2 text-gray-400 text-sm font-medium">
                 {index + 1}
               </div>
-
-              {/* Image container - smaller on mobile */}
               <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden border border-gray-700/70">
                 <Image
-                  src={genre.image}
+                  src={
+                    imageError[genre.id]
+                      ? "/api/placeholder/40/40"
+                      : genre.image
+                  }
                   alt={genre.name}
                   fill
                   className="object-cover group-hover:scale-110 transition-transform duration-300"
-                  onError={(e) => {
-                    e.currentTarget.src = "/api/placeholder/40/40";
-                  }}
+                  onError={() => handleImageError(genre.id)}
                 />
               </div>
-
-              {/* Genre details - more compact on mobile */}
               <div className="ml-2 sm:ml-3 flex-1 min-w-0">
                 <h3 className="font-medium text-sm sm:text-base text-white truncate group-hover:text-blue-300 transition-colors">
                   {genre.name}
@@ -182,7 +190,6 @@ export default function Genre() {
           ))}
         </div>
 
-        {/* Show More / Show Less button for mobile only */}
         <div className="mt-3 sm:hidden flex justify-center">
           <button
             onClick={() => setShowAllGenres(!showAllGenres)}
