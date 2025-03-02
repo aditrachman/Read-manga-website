@@ -10,21 +10,22 @@ export default function Hero() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [loopNum, setLoopNum] = useState(0);
   const [typingSpeed, setTypingSpeed] = useState(150);
-  const [isClient, setIsClient] = useState(false);
-
-  // Set isClient to true when component mounts on client side
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  const [mounted, setMounted] = useState(false);
 
   const phrases = ["Manga", "Manhwa", "Manhua"];
   const currentTextRef = useRef("");
   const currentPhraseIndex = loopNum % phrases.length;
   const fullText = phrases[currentPhraseIndex];
 
+  // Only run on client-side
   useEffect(() => {
-    // Only run typing effect on client-side
-    if (!isClient) return;
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  // Typing effect
+  useEffect(() => {
+    if (!mounted) return;
 
     const timer = setTimeout(() => {
       if (!isDeleting) {
@@ -56,9 +57,9 @@ export default function Hero() {
     }, typingSpeed);
 
     return () => clearTimeout(timer);
-  }, [displayText, isDeleting, loopNum, fullText, typingSpeed, isClient]);
+  }, [displayText, isDeleting, loopNum, fullText, typingSpeed, mounted]);
 
-  // Data card NFT dengan konten yang lebih lengkap
+  // Data cards
   const nftCards = [
     {
       id: 1,
@@ -120,16 +121,35 @@ export default function Hero() {
     );
   };
 
-  // Setup auto rotation - only on client side
+  // Auto rotate carousel - client side only
   useEffect(() => {
-    if (!isClient) return;
+    if (!mounted) return;
 
     const interval = setInterval(() => {
       nextCard();
     }, 5000); // 5 seconds for better reading time
 
     return () => clearInterval(interval);
-  }, [isClient]);
+  }, [mounted]);
+
+  // If not mounted yet (server-side), return minimal placeholder
+  if (!mounted) {
+    return (
+      <section className="relative w-full min-h-screen text-white flex flex-col md:flex-row items-center justify-between px-4 md:px-16 py-8 md:py-12 gap-8">
+        <div className="w-full md:w-1/2 text-center md:text-left relative z-10">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mt-4">
+            Baca <span className="text-purple-500">Manga</span> <br />
+            Terlengkap dan <br /> No Iklan
+          </h1>
+        </div>
+        <div className="w-full md:w-1/3 flex items-center justify-center">
+          <div className="relative w-full max-w-sm h-[420px] sm:h-[480px] rounded-3xl shadow-xl overflow-hidden border border-purple-500/30">
+            <div className="bg-gray-800 h-full w-full rounded-3xl"></div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   // Current active card
   const currentCard = nftCards[currentCardIndex];
@@ -154,11 +174,8 @@ export default function Hero() {
         </div>
 
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mt-4">
-          Baca{" "}
-          <span className="text-purple-500">
-            {isClient ? displayText : phrases[0]}
-          </span>{" "}
-          <br /> Terlengkap dan <br /> <div className=""> No Iklan</div>
+          Baca <span className="text-purple-500">{displayText}</span> <br />{" "}
+          Terlengkap dan <br /> <div className=""> No Iklan</div>
         </h1>
         <p className="mt-4 text-base md:text-lg text-gray-300 max-w-md mx-auto md:mx-0">
           Website baca manga Terlengkap dan No Iklan bikin kamu baca manga
