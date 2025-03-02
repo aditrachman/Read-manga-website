@@ -10,6 +10,12 @@ export default function Hero() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [loopNum, setLoopNum] = useState(0);
   const [typingSpeed, setTypingSpeed] = useState(150);
+  const [isClient, setIsClient] = useState(false);
+
+  // Set isClient to true when component mounts on client side
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const phrases = ["Manga", "Manhwa", "Manhua"];
   const currentTextRef = useRef("");
@@ -17,27 +23,30 @@ export default function Hero() {
   const fullText = phrases[currentPhraseIndex];
 
   useEffect(() => {
+    // Only run typing effect on client-side
+    if (!isClient) return;
+
     const timer = setTimeout(() => {
       if (!isDeleting) {
-        // Sedang menambahkan karakter
+        // Adding characters
         currentTextRef.current = fullText.substring(0, displayText.length + 1);
         setDisplayText(currentTextRef.current);
 
-        // Ketika teks sudah lengkap, siap untuk menghapus setelah jeda
+        // When text is complete, prepare to delete after pause
         if (currentTextRef.current === fullText) {
           setTypingSpeed(150);
-          // Tunggu 1.5 detik sebelum mulai menghapus
+          // Wait 1.5 seconds before starting deletion
           setTimeout(() => {
             setIsDeleting(true);
-            setTypingSpeed(75); // Lebih cepat saat menghapus
+            setTypingSpeed(75); // Faster when deleting
           }, 1500);
         }
       } else {
-        // Sedang menghapus karakter
+        // Deleting characters
         currentTextRef.current = fullText.substring(0, displayText.length - 1);
         setDisplayText(currentTextRef.current);
 
-        // Ketika teks sudah terhapus semua, siap untuk kata berikutnya
+        // When all text is deleted, prepare for next word
         if (currentTextRef.current === "") {
           setIsDeleting(false);
           setLoopNum(loopNum + 1);
@@ -47,7 +56,7 @@ export default function Hero() {
     }, typingSpeed);
 
     return () => clearTimeout(timer);
-  }, [displayText, isDeleting, loopNum, fullText, typingSpeed]);
+  }, [displayText, isDeleting, loopNum, fullText, typingSpeed, isClient]);
 
   // Data card NFT dengan konten yang lebih lengkap
   const nftCards = [
@@ -80,12 +89,11 @@ export default function Hero() {
     },
   ];
 
-  // Fungsi untuk berpindah ke card berikutnya
+  // Functions for carousel navigation
   const nextCard = () => {
     setCurrentCardIndex((prevIndex) => (prevIndex + 1) % nftCards.length);
   };
 
-  // Fungsi untuk berpindah ke card sebelumnya
   const prevCard = () => {
     setCurrentCardIndex(
       (prevIndex) => (prevIndex - 1 + nftCards.length) % nftCards.length
@@ -112,22 +120,23 @@ export default function Hero() {
     );
   };
 
-  // Gunakan useEffect untuk mengatur interval
+  // Setup auto rotation - only on client side
   useEffect(() => {
+    if (!isClient) return;
+
     const interval = setInterval(() => {
       nextCard();
-    }, 5000); // Increased to 5 seconds for better reading time
+    }, 5000); // 5 seconds for better reading time
 
-    // Membersihkan interval saat komponen di-unmount
     return () => clearInterval(interval);
-  }, []);
+  }, [isClient]);
 
-  // Data card yang sedang aktif
+  // Current active card
   const currentCard = nftCards[currentCardIndex];
 
   return (
     <section className="relative w-full min-h-screen text-white flex flex-col md:flex-row items-center justify-between px-4 md:px-16 py-8 md:py-12 gap-8">
-      {/* Kiri: Teks & Tombol */}
+      {/* Left: Text & Buttons */}
       <div className="w-full md:w-1/2 text-center md:text-left relative z-10">
         <div className="mt-8 sm:mt-10 lg:mt-2">
           <a href="#" className="inline-flex space-x-6">
@@ -145,15 +154,18 @@ export default function Hero() {
         </div>
 
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mt-4">
-          Baca <span className="text-purple-500">{displayText}</span> <br />{" "}
-          Terlengkap dan <br /> <div className=""> No Iklan</div>
+          Baca{" "}
+          <span className="text-purple-500">
+            {isClient ? displayText : phrases[0]}
+          </span>{" "}
+          <br /> Terlengkap dan <br /> <div className=""> No Iklan</div>
         </h1>
         <p className="mt-4 text-base md:text-lg text-gray-300 max-w-md mx-auto md:mx-0">
           Website baca manga Terlengkap dan No Iklan bikin kamu baca manga
           dengan nyaman.
         </p>
 
-        {/* Tombol */}
+        {/* Buttons */}
         <div className="mt-6 flex justify-center md:justify-start space-x-4">
           <button className="rounded-md bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:opacity-80 hover:scale-105">
             Jelajahi
@@ -164,12 +176,12 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Kanan: Card NFT - Improved for mobile and visuals */}
+      {/* Right: Card NFT - Improved for mobile and visuals */}
       <div className="w-full md:w-1/3 flex items-center justify-center">
         <div className="relative w-full max-w-sm h-[420px] sm:h-[480px] rounded-3xl shadow-xl overflow-hidden border border-purple-500/30">
           {/* Glass effect container with animation */}
           <div className="relative rounded-3xl bg-gray-900/80 backdrop-blur-sm overflow-hidden h-full transform transition-all duration-500 hover:scale-[1.02] group">
-            {/* Gambar dengan better loading */}
+            {/* Image with better loading */}
             <div className="absolute inset-0 w-full h-full">
               <Image
                 src={currentCard.image}
@@ -186,7 +198,7 @@ export default function Hero() {
             {/* Improved Overlay Gradient */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent rounded-3xl"></div>
 
-            {/* Badge di pojok kanan atas */}
+            {/* Badge in top right corner */}
             <div className="absolute top-4 right-4 bg-purple-600/90 px-3 py-1 rounded-full text-xs font-bold">
               {currentCard.chapter}
             </div>
@@ -198,7 +210,7 @@ export default function Hero() {
               </span>
             </div>
 
-            {/* Informasi di bawah dengan layout yang lebih baik */}
+            {/* Information at the bottom with better layout */}
             <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-black/90 via-black/70 to-transparent rounded-b-3xl text-white">
               <div className="flex justify-between items-end mb-3">
                 <div>
@@ -215,7 +227,7 @@ export default function Hero() {
                 </div>
               </div>
 
-              {/* Tombol dengan desain yang lebih modern */}
+              {/* Buttons with more modern design */}
               <div className="flex space-x-3">
                 <button className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 text-sm rounded-lg hover:shadow-purple-500/30 hover:shadow-lg transition-all duration-300 font-medium">
                   Baca sekarang
