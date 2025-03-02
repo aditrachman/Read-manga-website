@@ -35,7 +35,7 @@ export default function Navbar() {
       as="nav"
       className={`fixed top-0 left-0 w-full transition-transform duration-300 ${
         showNavbar ? "translate-y-0" : "-translate-y-full"
-      } bg-[#14172f] lg:bg-transparent shadow-md`}
+      } bg-[#0a0d14]/80 backdrop-blur-sm shadow-lg z-20`}
     >
       {({ open }) => (
         <>
@@ -77,7 +77,7 @@ export default function Navbar() {
                     name="search"
                     type="search"
                     placeholder="Cari Manga"
-                    className="block w-full rounded-md bg-gray-600 py-1.5 pr-3 pl-10 text-base text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                    className="block w-full rounded-md bg-gray-800/80 py-1.5 pr-3 pl-10 text-base text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-600"
                   />
                   <MagnifyingGlassIcon
                     aria-hidden="true"
@@ -101,7 +101,7 @@ export default function Navbar() {
           </div>
 
           {/* Mobile Menu */}
-          <DisclosurePanel className="lg:hidden">
+          <DisclosurePanel className="lg:hidden bg-[#05080f]/90 backdrop-blur-sm">
             <div className="space-y-1 pt-2 pb-3">
               {menuItems.map((item) => (
                 <DisclosureButton
@@ -112,8 +112,8 @@ export default function Navbar() {
                   aria-current={activePage === item ? "page" : undefined}
                   className={`block py-2 pr-4 pl-3 text-base font-medium transition-all duration-300 ${
                     activePage === item
-                      ? "relative text-white bg-indigo-50 bg-opacity-10 border-l-0 before:content-[''] before:absolute before:top-0 before:left-0 before:w-1 before:h-full before:bg-gradient-to-b before:from-purple-500 before:to-blue-500"
-                      : "border-transparent text-gray-400 hover:text-white hover:border-l-0 hover:bg-gray-700 hover:bg-opacity-20 relative hover:before:content-[''] hover:before:absolute hover:before:top-0 hover:before:left-0 hover:before:w-1 hover:before:h-full hover:before:bg-gradient-to-b hover:before:from-purple-500/50 hover:before:to-blue-500/50"
+                      ? "relative text-white bg-[#161b2e]/50 border-l-0 before:content-[''] before:absolute before:top-0 before:left-0 before:w-1 before:h-full before:bg-gradient-to-b before:from-purple-500 before:to-blue-500"
+                      : "border-transparent text-gray-400 hover:text-white hover:border-l-0 hover:bg-[#0a0d14]/50 relative hover:before:content-[''] hover:before:absolute hover:before:top-0 hover:before:left-0 hover:before:w-1 hover:before:h-full hover:before:bg-gradient-to-b hover:before:from-purple-500/50 hover:before:to-blue-500/50"
                   }`}
                 >
                   {item}

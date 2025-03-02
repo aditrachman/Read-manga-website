@@ -1,11 +1,53 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { ChevronRightIcon } from "@heroicons/react/20/solid";
 
 export default function Hero() {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [displayText, setDisplayText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [loopNum, setLoopNum] = useState(0);
+  const [typingSpeed, setTypingSpeed] = useState(150);
+
+  const phrases = ["Manga", "Manhwa", "Manhua"];
+  const currentTextRef = useRef("");
+  const currentPhraseIndex = loopNum % phrases.length;
+  const fullText = phrases[currentPhraseIndex];
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!isDeleting) {
+        // Sedang menambahkan karakter
+        currentTextRef.current = fullText.substring(0, displayText.length + 1);
+        setDisplayText(currentTextRef.current);
+
+        // Ketika teks sudah lengkap, siap untuk menghapus setelah jeda
+        if (currentTextRef.current === fullText) {
+          setTypingSpeed(150);
+          // Tunggu 1.5 detik sebelum mulai menghapus
+          setTimeout(() => {
+            setIsDeleting(true);
+            setTypingSpeed(75); // Lebih cepat saat menghapus
+          }, 1500);
+        }
+      } else {
+        // Sedang menghapus karakter
+        currentTextRef.current = fullText.substring(0, displayText.length - 1);
+        setDisplayText(currentTextRef.current);
+
+        // Ketika teks sudah terhapus semua, siap untuk kata berikutnya
+        if (currentTextRef.current === "") {
+          setIsDeleting(false);
+          setLoopNum(loopNum + 1);
+          setTypingSpeed(150);
+        }
+      }
+    }, typingSpeed);
+
+    return () => clearTimeout(timer);
+  }, [displayText, isDeleting, loopNum, fullText, typingSpeed]);
 
   // Data card NFT dengan konten yang lebih lengkap
   const nftCards = [
@@ -84,7 +126,7 @@ export default function Hero() {
   const currentCard = nftCards[currentCardIndex];
 
   return (
-    <section className="relative w-full min-h-screen text-white flex flex-col md:flex-row items-center justify-between px-4 md:px-16 py-8 md:py-12  gap-8">
+    <section className="relative w-full min-h-screen text-white flex flex-col md:flex-row items-center justify-between px-4 md:px-16 py-8 md:py-12 gap-8">
       {/* Kiri: Teks & Tombol */}
       <div className="w-full md:w-1/2 text-center md:text-left relative z-10">
         <div className="mt-8 sm:mt-10 lg:mt-2">
@@ -103,8 +145,8 @@ export default function Hero() {
         </div>
 
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mt-4">
-          Baca Manga <br /> Terlengkap dan <br />{" "}
-          <div className=""> No Iklan</div>
+          Baca <span className="text-purple-500">{displayText}</span> <br />{" "}
+          Terlengkap dan <br /> <div className=""> No Iklan</div>
         </h1>
         <p className="mt-4 text-base md:text-lg text-gray-300 max-w-md mx-auto md:mx-0">
           Website baca manga Terlengkap dan No Iklan bikin kamu baca manga
