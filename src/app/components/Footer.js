@@ -1,11 +1,11 @@
 export default function Footer() {
   return (
     <footer className="relative z-10 w-full">
-      <div className="text-white py-6 sm:py-10">
+      <div className="text-white py-6 sm:py-6">
         <div className="max-w-6xl mx-auto px-4 sm:px-5">
           {/* Tagline */}
           <div className="text-right mb-6 sm:mb-10">
-            <p className="text-base sm:text-lg font-medium px-2">
+            <p className="text-base sm:text-lg hidden font-medium px-2 sm:block">
               Website baca manga terlengkap,gratis dan pastinya<br></br> tidak
               ada iklan nikmati hanya di moco manga.
             </p>

@@ -1,4 +1,3 @@
-// app/components/MangaGenres.js
 "use client";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
@@ -6,25 +5,11 @@ import Image from "next/image";
 export default function Genre() {
   const [activeTimeframe, setActiveTimeframe] = useState("1 Day");
   const [showAllGenres, setShowAllGenres] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [imageError, setImageError] = useState({});
+  const [isClient, setIsClient] = useState(false); // Deteksi client-side
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsMobile(window.innerWidth < 640);
-
-      const handleResize = () => {
-        setIsMobile(window.innerWidth < 640);
-      };
-
-      window.addEventListener("resize", handleResize);
-      return () => window.removeEventListener("resize", handleResize);
-    }
+    setIsClient(true);
   }, []);
-
-  const handleImageError = (id) => {
-    setImageError((prev) => ({ ...prev, [id]: true }));
-  };
 
   const topGenres = [
     {
@@ -92,8 +77,14 @@ export default function Genre() {
     },
   ];
 
-  const displayGenres =
-    showAllGenres || !isMobile ? topGenres : topGenres.slice(0, 5);
+  // Logika menampilkan genre sesuai layar dan tombol "Show More"
+  const displayGenres = isClient
+    ? showAllGenres
+      ? topGenres
+      : window.innerWidth < 640
+      ? topGenres.slice(0, 5)
+      : topGenres
+    : [];
 
   return (
     <div className="w-full px-2 py-4 md:p-6">
@@ -118,7 +109,6 @@ export default function Genre() {
             ))}
           </div>
         </div>
-
         <div className="space-y-2 sm:space-y-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-4">
           {displayGenres.map((genre, index) => (
             <div
@@ -130,15 +120,13 @@ export default function Genre() {
               </div>
               <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden border border-gray-700/70">
                 <Image
-                  src={
-                    imageError[genre.id]
-                      ? "/api/placeholder/40/40"
-                      : genre.image
-                  }
+                  src={genre.image}
                   alt={genre.name}
                   fill
                   className="object-cover group-hover:scale-110 transition-transform duration-300"
-                  onError={() => handleImageError(genre.id)}
+                  onError={(e) => {
+                    e.currentTarget.src = "/api/placeholder/40/40";
+                  }}
                 />
               </div>
               <div className="ml-2 sm:ml-3 flex-1 min-w-0">
@@ -189,14 +177,15 @@ export default function Genre() {
             </div>
           ))}
         </div>
-
         <div className="mt-3 sm:hidden flex justify-center">
-          <button
-            onClick={() => setShowAllGenres(!showAllGenres)}
-            className="bg-gradient-to-r from-indigo-600/80 to-blue-600/80 text-white text-xs px-4 py-2 rounded-lg font-medium hover:from-indigo-500 hover:to-blue-500 transition-all duration-300"
-          >
-            {showAllGenres ? "Show Less" : "Show More"}
-          </button>
+          {isClient && window.innerWidth < 640 && (
+            <button
+              onClick={() => setShowAllGenres(!showAllGenres)}
+              className="bg-gradient-to-r from-indigo-600/80 to-blue-600/80 text-white text-xs px-4 py-2 rounded-lg font-medium hover:from-indigo-500 hover:to-blue-500 transition-all duration-300"
+            >
+              {showAllGenres ? "Show Less" : "Show More"}
+            </button>
+          )}
         </div>
       </div>
     </div>
