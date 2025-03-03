@@ -245,11 +245,12 @@ export default function Hero() {
                 src={currentCard.image}
                 alt={`${currentCard.title} Cover`}
                 fill
-                priority
-                sizes="(max-width: 768px) 100vw, 50vw"
+                priority={currentCardIndex === 0} // Hanya prioritaskan gambar pertama
+                sizes="(max-width: 768px) 100vw, 400px"
                 style={{ objectFit: "cover" }}
+                loading={currentCardIndex === 0 ? "eager" : "lazy"}
                 className="rounded-3xl transition-transform duration-700 group-hover:scale-110"
-                unoptimized
+                // Hapus unoptimized
               />
             </div>
 
