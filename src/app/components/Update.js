@@ -29,15 +29,14 @@ const MangaCard = memo(({ manga }) => {
           }}
         />
 
-        {/* Status badge */}
+        {/* Status badge - right side (Ongoing/Completed) */}
         <div className="absolute top-2 right-2 backdrop-blur-md bg-indigo-600/60 text-white text-xs px-2 py-1 rounded-md font-medium shadow-lg">
           {manga.status}
         </div>
 
-        {/* New chapter badge */}
-        <div className="absolute top-2 left-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-xs px-2 py-1 rounded-md font-medium shadow-lg flex items-center gap-1">
-          <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse"></span>
-          Ch.{manga.chapter}
+        {/* Origin status badge - left side (JP/KR/CN) */}
+        <div className="absolute top-2 left-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-xs px-2 py-1 rounded-md font-medium shadow-lg">
+          {manga.origin || "JP"}
         </div>
 
         {/* Bottom gradient overlay */}
@@ -50,7 +49,7 @@ const MangaCard = memo(({ manga }) => {
           {manga.title}
         </h3>
 
-        <div className="flex justify-between items-center mb-2">
+        <div className="flex justify-between items-center">
           <div className="text-xs text-gray-400">Chapter {manga.chapter}</div>
           <div className="flex items-center gap-1">
             <svg
@@ -64,20 +63,6 @@ const MangaCard = memo(({ manga }) => {
             <span className="text-xs font-medium">{manga.rating}</span>
           </div>
         </div>
-
-        {/* Genre tags - hanya tampilkan maksimal 3 */}
-        {manga.genres && manga.genres.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-1 py-1">
-            {manga.genres.slice(0, 3).map((genre, idx) => (
-              <span
-                key={idx}
-                className="text-xs bg-gradient-to-r from-gray-800 to-gray-700 backdrop-blur-sm px-2 py-0.5 rounded-full border border-gray-700/60 text-gray-300 hover:text-white transition-colors duration-200"
-              >
-                {genre}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );
@@ -120,7 +105,7 @@ export default function Update() {
         image: doc.data().image || "/api/placeholder/240/320",
         status: doc.data().status || "Ongoing",
         rating: doc.data().rating || "0.0",
-        genres: doc.data().genre || [],
+        origin: doc.data().origin || "JP", // Menambahkan origin (JP/KR/CN)
       }));
 
       setMangas(mangaList);
@@ -241,8 +226,8 @@ export default function Update() {
         </div>
       ) : (
         <>
-          {/* Grid untuk menampilkan manga */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6 px-2 md:px-8">
+          {/* Grid untuk menampilkan manga - diubah menjadi 6 kolom untuk desktop */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 px-2 md:px-8">
             {mangas.map((manga) => (
               <MangaCard key={manga.id} manga={manga} />
             ))}
