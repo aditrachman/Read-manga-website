@@ -1,4 +1,5 @@
 "use client";
+import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import Image from "next/image";
@@ -24,9 +25,10 @@ export default function MangaDetail() {
 
         if (mangaDoc.exists()) {
           const data = mangaDoc.data();
-          const publishedDate = data.published
-            ? data.published.split(" to ")[0]
-            : "Unknown"; // Ambil bagian pertama
+          const publishedDate =
+            data.published instanceof Timestamp
+              ? data.published.toDate().toLocaleDateString("id-ID") // Format ke tanggal Indonesia
+              : "Unknown";
           setManga({
             id: mangaDoc.id,
             title: data.title || "Unknown Title",

@@ -5,6 +5,7 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "cdn.myanimelist.net",
+        hostname: "cdn.komiku.id",
       },
     ],
   },

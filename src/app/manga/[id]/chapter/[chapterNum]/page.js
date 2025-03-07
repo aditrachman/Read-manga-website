@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
@@ -42,20 +43,22 @@ export default function ReadChapter() {
           const q = query(
             chaptersRef,
             where("mangaId", "==", params.id),
-            where("number", "==", parseInt(params.chapterNum))
+            where("chapterNumber", "==", parseInt(params.chapterNum))
           );
 
           const chapterSnapshot = await getDocs(q);
 
           if (!chapterSnapshot.empty) {
             const chapterDoc = chapterSnapshot.docs[0];
+            const chapterData = chapterDoc.data();
+
             setChapter({
               id: chapterDoc.id,
-              ...chapterDoc.data(),
-              // Buat placeholder pages jika perlu
-              pages:
-                chapterDoc.data().pages ||
-                Array(20).fill("/api/placeholder/800/1200"),
+              title:
+                chapterData.title || `Chapter ${chapterData.chapterNumber}`,
+              number: chapterData.chapterNumber,
+              images: chapterData.images || [],
+              createdAt: chapterData.createdAt,
             });
           } else {
             console.error("Chapter tidak ditemukan");
@@ -144,7 +147,7 @@ export default function ReadChapter() {
           </button>
 
           <div className="text-white font-medium truncate max-w-xs">
-            {manga.title} - Chapter {params.chapterNum}
+            {manga.title} - {chapter.title}
           </div>
 
           <div className="flex space-x-2">
@@ -195,26 +198,32 @@ export default function ReadChapter() {
       {/* Chapter Content */}
       <div className="max-w-3xl mx-auto">
         <div className="space-y-4">
-          {chapter.pages.map((page, index) => (
-            <div
-              key={index}
-              className="relative aspect-[3/4] w-full bg-gray-800 rounded-lg overflow-hidden shadow-lg"
-            >
-              <Image
-                src={page}
-                alt={`Page ${index + 1}`}
-                fill
-                style={{ objectFit: "contain" }}
-                sizes="(max-width: 640px) 100vw, (max-width: 768px) 80vw, 60vw"
-                className="w-full h-auto"
-                placeholder="blur"
-                blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMyMDIwMzAiLz48L3N2Zz4="
-                onError={(e) => {
-                  e.target.src = "/api/placeholder/800/1200";
-                }}
-              />
+          {chapter.images && chapter.images.length > 0 ? (
+            chapter.images.map((imageUrl, index) => (
+              <div
+                key={index}
+                className="relative aspect-[3/4] w-full bg-gray-800 rounded-lg overflow-hidden shadow-lg"
+              >
+                <Image
+                  src={imageUrl}
+                  alt={`Page ${index + 1}`}
+                  fill
+                  style={{ objectFit: "contain" }}
+                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 80vw, 60vw"
+                  className="w-full h-auto"
+                  placeholder="blur"
+                  blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMyMDIwMzAiLz48L3N2Zz4="
+                  onError={(e) => {
+                    e.target.src = "/api/placeholder/800/1200";
+                  }}
+                />
+              </div>
+            ))
+          ) : (
+            <div className="text-center text-gray-400 py-10">
+              Tidak ada gambar tersedia untuk chapter ini.
             </div>
-          ))}
+          )}
         </div>
 
         {/* Chapter Navigation */}

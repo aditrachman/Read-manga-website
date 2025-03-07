@@ -2,11 +2,13 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { getCurrentUser } from "@/app/lib/auth";
+import { useRouter } from "next/navigation";
+import { getCurrentUser, logoutUser } from "@/app/lib/auth";
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/app/lib/firebase";
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const [user, setUser] = useState(null);
   const [stats, setStats] = useState({
     totalManga: 0,
@@ -19,6 +21,11 @@ export default function AdminDashboard() {
     const loadUser = async () => {
       const currentUser = await getCurrentUser();
       setUser(currentUser);
+
+      // Redirect jika tidak login
+      if (!currentUser) {
+        router.push("/login");
+      }
     };
 
     const fetchStats = async () => {
@@ -62,7 +69,20 @@ export default function AdminDashboard() {
 
     loadUser();
     fetchStats();
-  }, []);
+  }, [router]);
+
+  const handleLogout = async () => {
+    try {
+      const result = await logoutUser();
+      if (result.success) {
+        router.push("/login");
+      } else {
+        console.error("Gagal logout:", result.error);
+      }
+    } catch (error) {
+      console.error("Error saat logout:", error);
+    }
+  };
 
   if (loading) {
     return <div className="p-8 text-center">Loading dashboard...</div>;
@@ -70,7 +90,22 @@ export default function AdminDashboard() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto py-24">
-      <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+        <div className="flex items-center gap-4">
+          {user && (
+            <>
+              <span className="text-gray-300">{user.email}</span>
+              <button
+                onClick={handleLogout}
+                className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-md text-sm"
+              >
+                Logout
+              </button>
+            </>
+          )}
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-indigo-900/50 p-6 rounded-lg shadow">
