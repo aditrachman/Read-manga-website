@@ -3,11 +3,16 @@ import { db } from "../lib/firebase";
 import { collection, getDocs, query, limit, orderBy } from "firebase/firestore";
 import { useEffect, useState, useCallback, memo } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 // Komponen MangaCard yang di-memoize untuk mencegah render ulang yang tidak perlu
 const MangaCard = memo(({ manga }) => {
   return (
     <div className="group relative bg-gradient-to-b from-gray-800/40 to-gray-900/80 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg hover:shadow-indigo-500/20 transition-all duration-300 hover:transform hover:scale-[1.03] border border-gray-700/50">
+      <Link href={`/manga/${manga.id}`} className="absolute inset-0 z-10">
+        <span className="sr-only">View details for {manga.title}</span>
+      </Link>
+
       {/* Card glow effect on hover */}
       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
         <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-blue-500 rounded-xl opacity-0 group-hover:opacity-20 blur-md transition-opacity duration-300"></div>
@@ -30,12 +35,12 @@ const MangaCard = memo(({ manga }) => {
         />
 
         {/* Status badge - right side (Ongoing/Completed) */}
-        <div className="absolute top-2 right-2 backdrop-blur-md bg-indigo-600/60 text-white text-xs px-2 py-1 rounded-md font-medium shadow-lg">
+        <div className="absolute top-2 right-2 backdrop-blur-md bg-indigo-600/60 text-white text-xs px-2 py-1 rounded-md font-medium shadow-lg z-20">
           {manga.status}
         </div>
 
         {/* Origin status badge - left side (JP/KR/CN) */}
-        <div className="absolute top-2 left-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-xs px-2 py-1 rounded-md font-medium shadow-lg">
+        <div className="absolute top-2 left-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-xs px-2 py-1 rounded-md font-medium shadow-lg z-20">
           {manga.origin || "JP"}
         </div>
 
@@ -92,7 +97,7 @@ export default function Update() {
       // dan orderBy untuk memastikan data yang paling relevan ditampilkan lebih dulu
       const mangaQuery = query(
         collection(db, "manga"),
-        orderBy("chapters", "desc"), // Urutkan berdasar chapter terbaru
+        orderBy("updatedAt", "desc"), // Ubah menjadi updatedAt agar yang terbaru di paling kiri
         limit(20) // Batasi jumlah data yang diambil
       );
 
