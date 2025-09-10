@@ -11,9 +11,26 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
+    // Basic validation
+    if (!email.trim()) {
+      setError("Email harus diisi.");
+      return;
+    }
+    
+    if (!password.trim()) {
+      setError("Password harus diisi.");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password minimal 6 karakter.");
+      return;
+    }
 
     // Reset error state
     setError("");
@@ -40,7 +57,7 @@ export default function AdminLogin() {
       // Translate Firebase error messages to user-friendly messages
       switch (error.code) {
         case "auth/invalid-email":
-          setError("Email tidak valid.");
+          setError("Format email tidak valid.");
           break;
         case "auth/user-not-found":
           setError("Akun tidak ditemukan.");
@@ -48,11 +65,20 @@ export default function AdminLogin() {
         case "auth/wrong-password":
           setError("Password salah.");
           break;
+        case "auth/invalid-credential":
+          setError("Email atau password salah. Silakan coba lagi.");
+          break;
+        case "auth/user-disabled":
+          setError("Akun telah dinonaktifkan.");
+          break;
         case "auth/too-many-requests":
-          setError("Terlalu banyak percobaan. Coba lagi nanti.");
+          setError("Terlalu banyak percobaan login. Coba lagi dalam beberapa menit.");
+          break;
+        case "auth/network-request-failed":
+          setError("Koneksi internet bermasalah. Periksa koneksi Anda.");
           break;
         default:
-          setError("Gagal login. " + error.message);
+          setError("Gagal login. Silakan periksa email dan password Anda.");
       }
     } finally {
       setLoading(false);
@@ -94,7 +120,10 @@ export default function AdminLogin() {
                   autoComplete="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (error) setError(""); // Clear error saat user mengetik
+                  }}
                   className="appearance-none block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 bg-gray-700 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   placeholder="admin@example.com"
                 />
@@ -108,17 +137,36 @@ export default function AdminLogin() {
               >
                 Password
               </label>
-              <div className="mt-1">
+              <div className="mt-1 relative">
                 <input
                   id="password"
                   name="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 bg-gray-700 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (error) setError(""); // Clear error saat user mengetik
+                  }}
+                  className="appearance-none block w-full px-3 py-2 pr-10 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 bg-gray-700 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-300"
+                >
+                  {showPassword ? (
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                    </svg>
+                  ) : (
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  )}
+                </button>
               </div>
             </div>
 

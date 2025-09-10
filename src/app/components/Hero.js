@@ -32,7 +32,7 @@ export default function Hero() {
     const fetchMangas = async () => {
       try {
         const mangaRef = collection(db, "manga");
-        const q = query(mangaRef, orderBy("rating", "desc"), limit(3)); // Order by rating descending (highest first)
+        const q = query(mangaRef, orderBy("rating", "desc"), limit(3)); // Limit to 3 for performance
         const querySnapshot = await getDocs(q);
 
         const mangaData = querySnapshot.docs.map((doc) => {

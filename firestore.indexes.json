@@ -1,0 +1,49 @@
+{
+    "indexes": [
+        {
+            "collectionGroup": "chapters",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "mangaId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "chapterNumber",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "manga",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "rating",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "manga",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "popularity",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "manga",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "updatedAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        }
+    ],
+    "fieldOverrides": []
+}

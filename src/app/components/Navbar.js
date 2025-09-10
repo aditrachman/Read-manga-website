@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import {
   Disclosure,
@@ -15,14 +15,13 @@ import {
   getDocs,
   query,
   where,
-  orderBy,
-  limit,
   getCountFromServer,
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const [showNavbar, setShowNavbar] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [activePage, setActivePage] = useState("Home");
@@ -45,6 +44,19 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
 
+  // Update active page based on current pathname
+  useEffect(() => {
+    const pathToPageMap = {
+      "/": "Home",
+      "/manga": "All Manga",
+      "/genre": "Genre",
+      "/recommendation": "Recommendation",
+    };
+    
+    const currentPage = pathToPageMap[pathname] || "Home";
+    setActivePage(currentPage);
+  }, [pathname]);
+
   // Handle navigasi saat item menu diklik
   const handleNavigation = (item) => {
     setActivePage(item);
@@ -53,10 +65,15 @@ export default function Navbar() {
       Home: "/",
       "All Manga": "/manga",
       Genre: "/genre",
-      Recomendation: "/recommendation",
+      Recommendation: "/recommendation",
     };
 
-    router.push(pathMap[item]);
+    const targetPath = pathMap[item];
+    if (targetPath) {
+      router.push(targetPath);
+    } else {
+      console.warn(`No path found for menu item: ${item}`);
+    }
   };
 
   // Implementasi fungsi pencarian dengan jumlah chapter
@@ -175,21 +192,21 @@ export default function Navbar() {
     }
   };
 
-  // Debounce fungsi pencarian
+  // Debounce fungsi pencarian dengan delay lebih panjang untuk performance
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      if (searchTerm) {
+      if (searchTerm && searchTerm.length >= 2) { // Minimum 2 karakter
         searchManga(searchTerm);
       } else {
         setSearchResults([]);
         setShowResults(false);
       }
-    }, 300);
+    }, 500); // Increase delay to 500ms
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm]);
 
-  const menuItems = ["Home", "All Manga", "Genre", "Recomendation"];
+  const menuItems = ["Home", "All Manga", "Genre", "Recommendation"];
 
   return (
     <Disclosure
@@ -218,7 +235,12 @@ export default function Navbar() {
                   {menuItems.map((item) => (
                     <Link
                       key={item}
-                      href="#"
+                      href={
+                        item === "Home" ? "/" :
+                        item === "All Manga" ? "/manga" :
+                        item === "Genre" ? "/genre" :
+                        item === "Recommendation" ? "/recommendation" : "#"
+                      }
                       onClick={() => handleNavigation(item)}
                       aria-current={activePage === item ? "page" : undefined}
                       className={`relative inline-flex items-center px-1 pt-1 text-lg font-medium transition-all duration-300 ${
@@ -321,7 +343,12 @@ export default function Navbar() {
                 <DisclosureButton
                   key={item}
                   as="a"
-                  href="#"
+                  href={
+                    item === "Home" ? "/" :
+                    item === "All Manga" ? "/manga" :
+                    item === "Genre" ? "/genre" :
+                    item === "Recommendation" ? "/recommendation" : "#"
+                  }
                   onClick={() => handleNavigation(item)}
                   aria-current={activePage === item ? "page" : undefined}
                   className={`block py-2 pr-4 pl-3 text-base font-medium transition-all duration-300 ${

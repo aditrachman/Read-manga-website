@@ -1,0 +1,27 @@
+{
+    "name": "Moco Manga - Baca Manga Gratis",
+    "short_name": "Moco Manga",
+    "description": "Website baca manga, manhwa, dan manhua terlengkap tanpa iklan",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0a0d14",
+    "theme_color": "#6366f1",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/logo.ico",
+            "sizes": "192x192",
+            "type": "image/x-icon"
+        },
+        {
+            "src": "/logo.ico",
+            "sizes": "512x512",
+            "type": "image/x-icon"
+        }
+    ],
+    "categories": [
+        "entertainment",
+        "books"
+    ],
+    "lang": "id"
+}

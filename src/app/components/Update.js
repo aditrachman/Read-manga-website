@@ -92,6 +92,7 @@ export default function Update() {
   // Gunakan useCallback untuk fungsi yang akan dipass sebagai prop atau dalam useEffect
   const fetchMangas = useCallback(async () => {
     try {
+      console.log("🔄 Fetching latest update manga data...");
       setIsLoading(true);
       // Gunakan limit untuk mengurangi jumlah data yang diambil sekaligus
       // dan orderBy untuk memastikan data yang paling relevan ditampilkan lebih dulu
@@ -102,20 +103,34 @@ export default function Update() {
       );
 
       const querySnapshot = await getDocs(mangaQuery);
+      console.log("📊 Latest update query result:", querySnapshot.size, "documents");
 
-      const mangaList = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        title: doc.data().title || "Untitled",
-        chapter: doc.data().chapters || 0,
-        image: doc.data().image || "/api/placeholder/240/320",
-        status: doc.data().status || "Ongoing",
-        rating: doc.data().rating || "0.0",
-        origin: doc.data().origin || "JP", // Menambahkan origin (JP/KR/CN)
-      }));
+      if (querySnapshot.empty) {
+        console.log("⚠️ No manga documents found for latest update");
+        setMangas([]);
+        setIsLoading(false);
+        return;
+      }
 
+      const mangaList = querySnapshot.docs.map((doc) => {
+        const data = doc.data();
+        console.log(`📖 Latest manga:`, data.title);
+        return {
+          id: doc.id,
+          title: data.title || "Untitled",
+          chapter: data.chapters || 0,
+          image: data.image || "/api/placeholder/240/320",
+          status: data.status || "Ongoing",
+          rating: data.rating || "0.0",
+          origin: data.origin || "JP", // Menambahkan origin (JP/KR/CN)
+        };
+      });
+
+      console.log("✅ Successfully loaded", mangaList.length, "latest manga");
       setMangas(mangaList);
     } catch (error) {
-      console.error("Error fetching manga data: ", error);
+      console.error("❌ Error fetching latest manga data:", error);
+      console.error("Error details:", error.message);
     } finally {
       setIsLoading(false);
     }
@@ -194,9 +209,8 @@ export default function Update() {
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
-            className={`w-5 h-5 transition-transform duration-200 ${
-              mobileMenuOpen ? "rotate-180" : ""
-            }`}
+            className={`w-5 h-5 transition-transform duration-200 ${mobileMenuOpen ? "rotate-180" : ""
+              }`}
           >
             <path
               strokeLinecap="round"

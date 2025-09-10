@@ -47,16 +47,25 @@ export default function AddManga() {
       const response = await fetch(
         `https://api.jikan.moe/v4/manga?q=${encodeURIComponent(searchQuery)}`
       );
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
 
       if (data.data && data.data.length > 0) {
-        setSearchResults(data.data.slice(0, 5)); // Take top 5 results
+        // Filter out duplicates based on mal_id and take top 5 results
+        const uniqueResults = data.data.filter((manga, index, self) => 
+          index === self.findIndex(m => m.mal_id === manga.mal_id)
+        );
+        setSearchResults(uniqueResults.slice(0, 5));
       } else {
         alert("Tidak ditemukan manga dengan judul tersebut.");
       }
     } catch (error) {
       console.error("Error searching manga:", error);
-      alert("Terjadi kesalahan saat mencari manga.");
+      alert("Terjadi kesalahan saat mencari manga. Silakan coba lagi.");
     } finally {
       setSearchLoading(false);
     }
@@ -257,9 +266,9 @@ export default function AddManga() {
           <div className="mt-4">
             <h3 className="text-md font-medium mb-2">Hasil Pencarian:</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {searchResults.map((result) => (
+              {searchResults.map((result, index) => (
                 <div
-                  key={result.mal_id}
+                  key={`${result.mal_id}-${index}`}
                   className="flex gap-3 p-3 bg-gray-800 border border-gray-700 rounded-lg cursor-pointer hover:bg-gray-750"
                   onClick={() => selectManga(result)}
                 >

@@ -1,0 +1,24 @@
+{
+    "manifest_version": 3,
+    "name": "Manga Chapter Extractor",
+    "version": "1.0",
+    "description": "Extract manga chapter images quickly",
+    "permissions": [
+        "activeTab",
+        "clipboardWrite"
+    ],
+    "action": {
+        "default_popup": "popup.html",
+        "default_title": "Extract Manga Images"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "content.js"
+            ]
+        }
+    ]
+}

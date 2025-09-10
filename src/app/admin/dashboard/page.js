@@ -4,7 +4,16 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getCurrentUser, logoutUser } from "@/app/lib/auth";
-import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
+import { 
+  collection, 
+  getDocs, 
+  query, 
+  orderBy, 
+  limit, 
+  doc, 
+  deleteDoc, 
+  where 
+} from "firebase/firestore";
 import { db } from "@/app/lib/firebase";
 
 export default function AdminDashboard() {
@@ -16,6 +25,7 @@ export default function AdminDashboard() {
   });
   const [recentManga, setRecentManga] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(null);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -24,7 +34,7 @@ export default function AdminDashboard() {
 
       // Redirect jika tidak login
       if (!currentUser) {
-        router.push("/login");
+        router.push("/admin/login");
       }
     };
 
@@ -72,15 +82,55 @@ export default function AdminDashboard() {
   }, [router]);
 
   const handleLogout = async () => {
+    if (!confirm("Apakah Anda yakin ingin logout?")) {
+      return;
+    }
+    
     try {
       const result = await logoutUser();
       if (result.success) {
-        router.push("/login");
+        // Redirect ke halaman utama setelah logout
+        router.push("/");
       } else {
         console.error("Gagal logout:", result.error);
+        alert("Gagal logout. Silakan coba lagi.");
       }
     } catch (error) {
       console.error("Error saat logout:", error);
+      alert("Terjadi kesalahan saat logout.");
+    }
+  };
+
+  const deleteManga = async (mangaId, mangaTitle) => {
+    if (!confirm(`Apakah Anda yakin ingin menghapus manga "${mangaTitle}"?\n\nPeringatan: Semua chapter akan ikut terhapus dan tidak bisa dikembalikan!`)) {
+      return;
+    }
+
+    setDeleting(mangaId);
+    try {
+      // 1. Hapus semua chapters dari manga ini
+      const chaptersRef = collection(db, "chapters");
+      const chaptersQuery = query(chaptersRef, where("mangaId", "==", mangaId));
+      const chaptersSnapshot = await getDocs(chaptersQuery);
+      
+      // Hapus chapters satu per satu
+      const deletePromises = chaptersSnapshot.docs.map(chapterDoc => 
+        deleteDoc(doc(db, "chapters", chapterDoc.id))
+      );
+      await Promise.all(deletePromises);
+
+      // 2. Hapus manga
+      await deleteDoc(doc(db, "manga", mangaId));
+
+      // 3. Refresh data
+      fetchStats();
+      
+      alert(`✅ Manga "${mangaTitle}" dan ${chaptersSnapshot.docs.length} chapter berhasil dihapus!`);
+    } catch (error) {
+      console.error("Error deleting manga:", error);
+      alert("❌ Gagal menghapus manga. Silakan coba lagi.");
+    } finally {
+      setDeleting(null);
     }
   };
 
@@ -164,12 +214,27 @@ export default function AdminDashboard() {
                       {manga.updatedAt?.toDate().toLocaleDateString()}
                     </td>
                     <td className="py-3">
-                      <Link
-                        href={`/admin/manga/${manga.id}`}
-                        className="text-indigo-400 hover:underline"
-                      >
-                        Detail
-                      </Link>
+                      <div className="flex gap-2">
+                        <Link
+                          href={`/admin/manga/${manga.id}`}
+                          className="text-indigo-400 hover:underline text-sm"
+                        >
+                          Detail
+                        </Link>
+                        <Link
+                          href={`/admin/manga/${manga.id}/add-chapter`}
+                          className="text-green-400 hover:underline text-sm"
+                        >
+                          + Chapter
+                        </Link>
+                        <button
+                          onClick={() => deleteManga(manga.id, manga.title)}
+                          disabled={deleting === manga.id}
+                          className="text-red-400 hover:text-red-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {deleting === manga.id ? "Menghapus..." : "🗑️ Hapus"}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

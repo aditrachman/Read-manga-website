@@ -6,11 +6,29 @@ import Footer from "./components/Footer"; // Import Footer
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Moco Manga",
-  description: "Website manga terbaik untuk membaca manga secara gratis.",
-  icons: {
-    icon: "/logo.ico", // Path ke file favicon Anda
+  title: "Moco Manga - Baca Manga Gratis",
+  description: "Website baca manga, manhwa, dan manhua terlengkap tanpa iklan. Koleksi manga terbaru dan terpopuler.",
+  keywords: "manga, manhwa, manhua, baca manga gratis, manga online, manga indonesia",
+  authors: [{ name: "Moco Manga Team" }],
+  creator: "Moco Manga",
+  publisher: "Moco Manga",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
   },
+  icons: {
+    icon: "/logo.ico",
+    shortcut: "/logo.ico",
+    apple: "/logo.ico",
+  },
+  manifest: "/manifest.json",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+  },
+  themeColor: "#6366f1",
 };
 
 export default function RootLayout({ children }) {
