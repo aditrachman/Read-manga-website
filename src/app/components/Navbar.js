@@ -14,10 +14,10 @@ import {
   collection,
   getDocs,
   query,
-  orderBy,
-  limit,
+  where,
+  getCountFromServer,
 } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { db, firebaseReady } from "../lib/firebase";
 
 export default function Navbar() {
   const router = useRouter();
@@ -28,7 +28,6 @@ export default function Navbar() {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
-  const [searchPool, setSearchPool] = useState([]);
 
   // Handle scroll untuk hide/show navbar
   useEffect(() => {
@@ -47,40 +46,16 @@ export default function Navbar() {
 
   // Update active page based on current pathname
   useEffect(() => {
-    let currentPage = "Home";
-    if (pathname.startsWith("/manga")) currentPage = "All Manga";
-    else if (pathname.startsWith("/genre")) currentPage = "Genre";
-    else if (pathname.startsWith("/recommendation")) currentPage = "Recommendation";
+    const pathToPageMap = {
+      "/": "Home",
+      "/manga": "All Manga",
+      "/genre": "Genre",
+      "/recommendation": "Recommendation",
+    };
+    
+    const currentPage = pathToPageMap[pathname] || "Home";
     setActivePage(currentPage);
   }, [pathname]);
-
-  // Preload manga list once for fast local search.
-  useEffect(() => {
-    let mounted = true;
-    const preloadSearchPool = async () => {
-      try {
-        const mangaRef = collection(db, "manga");
-        const q = query(mangaRef, orderBy("updatedAt", "desc"), limit(500));
-        const snapshot = await getDocs(q);
-        const pool = snapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            title: data.title || "",
-            coverImage: data.image || data.coverImage || "",
-            chapterCount: Number(data.chapters || 0),
-          };
-        });
-        if (mounted) setSearchPool(pool);
-      } catch (error) {
-        console.error("Error preloading manga search pool:", error);
-      }
-    };
-    preloadSearchPool();
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
   // Handle navigasi saat item menu diklik
   const handleNavigation = (item) => {
@@ -104,10 +79,94 @@ export default function Navbar() {
   // Implementasi fungsi pencarian dengan jumlah chapter
   const searchManga = async (term) => {
     try {
+      if (!firebaseReady || !db) {
+        setSearchResults([]);
+        setShowResults(false);
+        return;
+      }
+      // Normalisasi search term untuk pencarian
       const searchTermLower = term.toLowerCase();
-      const limitedResults = searchPool
-        .filter((item) => item.title.toLowerCase().includes(searchTermLower))
-        .slice(0, 10);
+      const results = [];
+
+      // Query koleksi manga
+      const mangaRef = collection(db, "manga");
+      const mangaSnapshot = await getDocs(mangaRef);
+
+      // Filter hasil secara manual untuk lebih fleksibel
+      for (const doc of mangaSnapshot.docs) {
+        const data = doc.data();
+        const title = (data.title || "").toLowerCase();
+
+        // Cek apakah title mengandung search term
+        if (title.includes(searchTermLower)) {
+          // Hitung jumlah chapter untuk manga ini
+          const chapterCount = await getChapterCount(doc.id);
+
+          results.push({
+            id: doc.id,
+            ...data,
+            coverImage: data.image || data.coverImage, // Coba kedua field
+            chapterCount: chapterCount,
+            source: "manga",
+          });
+        }
+      }
+
+      // Query koleksi chapters
+      const chaptersRef = collection(db, "chapters");
+      const chaptersSnapshot = await getDocs(chaptersRef);
+
+      // Object untuk mengelompokkan chapter berdasarkan mangaId
+      const mangaChapters = {};
+
+      // Kelompokkan chapter berdasarkan mangaId
+      chaptersSnapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        const mangaId = data.mangaId;
+        if (mangaId) {
+          if (!mangaChapters[mangaId]) {
+            mangaChapters[mangaId] = [];
+          }
+          mangaChapters[mangaId].push(data);
+        }
+      });
+
+      // Filter chapters berdasarkan judul
+      for (const doc of chaptersSnapshot.docs) {
+        const data = doc.data();
+        const title = (data.mangaTitle || "").toLowerCase();
+        const mangaId = data.mangaId;
+
+        if (title.includes(searchTermLower) && mangaId) {
+          // Cek apakah manga ini sudah ada di result dari koleksi manga
+          const existingIndex = results.findIndex(
+            (item) =>
+              item.id === mangaId || (item.title || "").toLowerCase() === title
+          );
+
+          // Jika belum ada, tambahkan ke hasil
+          if (existingIndex === -1) {
+            // Hitung jumlah chapter untuk manga ini
+            const chapterCount = mangaChapters[mangaId]
+              ? mangaChapters[mangaId].length
+              : 1;
+
+            results.push({
+              id: mangaId,
+              title: data.mangaTitle,
+              coverImage: data.mangaCover || data.image,
+              chapterCount: chapterCount,
+              source: "chapters",
+            });
+          }
+        }
+      }
+
+      // Batasi hasil ke 10 item
+      const limitedResults = results.slice(0, 10);
+
+      // Untuk debugging
+      console.log("Search results with chapter counts:", limitedResults);
 
       setSearchResults(limitedResults);
       setShowResults(limitedResults.length > 0);
@@ -117,17 +176,37 @@ export default function Navbar() {
     }
   };
 
+  // Fungsi untuk menghitung jumlah chapter dari suatu manga
+  const getChapterCount = async (mangaId) => {
+    try {
+      const chaptersRef = collection(db, "chapters");
+      const q = query(chaptersRef, where("mangaId", "==", mangaId));
+
+      // Gunakan getCountFromServer untuk efisiensi jika tersedia
+      if (getCountFromServer) {
+        const snapshot = await getCountFromServer(q);
+        return snapshot.data().count;
+      } else {
+        // Fallback jika getCountFromServer tidak tersedia
+        const snapshot = await getDocs(q);
+        return snapshot.docs.length;
+      }
+    } catch (error) {
+      console.error(`Error getting chapter count for manga ${mangaId}:`, error);
+      return 0;
+    }
+  };
+
   // Debounce fungsi pencarian dengan delay lebih panjang untuk performance
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      if (searchTerm && searchTerm.length >= 2) {
-        // Minimum 2 karakter
+      if (searchTerm && searchTerm.length >= 2) { // Minimum 2 karakter
         searchManga(searchTerm);
       } else {
         setSearchResults([]);
         setShowResults(false);
       }
-    }, 300);
+    }, 500); // Increase delay to 500ms
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm]);
@@ -162,15 +241,10 @@ export default function Navbar() {
                     <Link
                       key={item}
                       href={
-                        item === "Home"
-                          ? "/"
-                          : item === "All Manga"
-                          ? "/manga"
-                          : item === "Genre"
-                          ? "/genre"
-                          : item === "Recommendation"
-                          ? "/recommendation"
-                          : "#"
+                        item === "Home" ? "/" :
+                        item === "All Manga" ? "/manga" :
+                        item === "Genre" ? "/genre" :
+                        item === "Recommendation" ? "/recommendation" : "#"
                       }
                       onClick={() => handleNavigation(item)}
                       aria-current={activePage === item ? "page" : undefined}
@@ -275,15 +349,10 @@ export default function Navbar() {
                   key={item}
                   as="a"
                   href={
-                    item === "Home"
-                      ? "/"
-                      : item === "All Manga"
-                      ? "/manga"
-                      : item === "Genre"
-                      ? "/genre"
-                      : item === "Recommendation"
-                      ? "/recommendation"
-                      : "#"
+                    item === "Home" ? "/" :
+                    item === "All Manga" ? "/manga" :
+                    item === "Genre" ? "/genre" :
+                    item === "Recommendation" ? "/recommendation" : "#"
                   }
                   onClick={() => handleNavigation(item)}
                   aria-current={activePage === item ? "page" : undefined}

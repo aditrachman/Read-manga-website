@@ -2,6 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -11,12 +12,20 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+let auth = null;
+let db = null;
+let firebaseReady = false;
+let firebaseInitError = null;
 
-// Initialize Firestore
-const db = getFirestore(app);
+try {
+  const app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  firebaseReady = true;
+} catch (error) {
+  firebaseInitError = error;
+  firebaseReady = false;
+  console.error("Firebase init failed:", error);
+}
 
-export { db };
-export { auth };
+export { db, auth, firebaseReady, firebaseInitError };

@@ -98,7 +98,7 @@ export default function Update() {
       // dan orderBy untuk memastikan data yang paling relevan ditampilkan lebih dulu
       const mangaQuery = query(
           collection(db, "manga"),
-          limit(20) // Removed orderBy on updatedAt to ensure data is fetched
+          orderBy("updatedAt", "desc")
         );
 
       const querySnapshot = await getDocs(mangaQuery);

@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { collection, getDocs, query, orderBy, limit, where } from "firebase/firestore";
-import { db } from "@/app/lib/firebase";
+import { db, firebaseReady } from "@/app/lib/firebase";
 
 export default function RecommendationPage() {
   const [topRated, setTopRated] = useState([]);
@@ -17,6 +17,13 @@ export default function RecommendationPage() {
 
   const fetchRecommendations = async () => {
     try {
+      if (!firebaseReady || !db) {
+        setTopRated([]);
+        setTrending([]);
+        setNewReleases([]);
+        setCompleted([]);
+        return;
+      }
       const mangaRef = collection(db, "manga");
 
       // Reduce limit for better performance

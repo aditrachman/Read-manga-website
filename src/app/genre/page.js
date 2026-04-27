@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "@/app/lib/firebase";
+import { db, firebaseReady } from "@/app/lib/firebase";
 
 export default function GenrePage() {
   const [selectedGenre, setSelectedGenre] = useState("Action");
@@ -22,6 +22,10 @@ export default function GenrePage() {
   const fetchMangasByGenre = async (genre) => {
     setLoading(true);
     try {
+      if (!firebaseReady || !db) {
+        setMangas([]);
+        return;
+      }
       const mangaRef = collection(db, "manga");
       const q = query(mangaRef, where("genre", "array-contains", genre));
       const querySnapshot = await getDocs(q);

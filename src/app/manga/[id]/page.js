@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/app/lib/firebase";
+import { db, firebaseReady } from "@/app/lib/firebase";
 
 export default function MangaDetail() {
   const params = useParams();
@@ -19,6 +19,11 @@ export default function MangaDetail() {
     const fetchMangaDetail = async () => {
       try {
         if (!params.id) return;
+        if (!firebaseReady || !db) {
+          setManga(null);
+          setLoading(false);
+          return;
+        }
 
         const mangaRef = doc(db, "manga", params.id);
         const mangaDoc = await getDoc(mangaRef);

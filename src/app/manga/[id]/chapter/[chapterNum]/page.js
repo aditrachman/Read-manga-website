@@ -9,7 +9,7 @@ import {
   where,
   getDocs,
 } from "firebase/firestore";
-import { db } from "@/app/lib/firebase";
+import { db, firebaseReady } from "@/app/lib/firebase";
 
 export default function ReadChapter() {
   const params = useParams();
@@ -36,11 +36,7 @@ export default function ReadChapter() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        if (!params.id || !params.chapterNum) {
-          console.error("Missing required parameters:", { id: params.id, chapterNum: params.chapterNum });
-          setLoading(false);
-          return;
-        }
+        if (!params.id || !params.chapterNum) return;
 
         // Fetch manga detail
         const mangaRef = doc(db, "manga", params.id);

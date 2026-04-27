@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "@/app/lib/firebase";
+import { auth, firebaseReady } from "@/app/lib/firebase";
 
 export default function AdminLayout({ children }) {
   const router = useRouter();
@@ -11,6 +11,12 @@ export default function AdminLayout({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!firebaseReady || !auth) {
+      // Kalau Firebase belum siap, jangan crash — biarkan user tetap bisa akses login.
+      if (pathname !== "/admin/login") router.push("/admin/login");
+      setLoading(false);
+      return;
+    }
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       // Jika bukan di halaman login dan user belum login, redirect ke login
       if (!user && pathname !== "/admin/login") {
