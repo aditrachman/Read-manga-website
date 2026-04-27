@@ -1,5 +1,5 @@
 "use client";
-import { db } from "../lib/firebase";
+import { db, firebaseReady } from "../lib/firebase";
 import { collection, getDocs, query, limit, orderBy } from "firebase/firestore";
 import { useEffect, useState, useCallback, memo } from "react";
 import Image from "next/image";
@@ -94,6 +94,10 @@ export default function Update() {
     try {
       console.log("🔄 Fetching latest update manga data...");
       setIsLoading(true);
+      if (!firebaseReady || !db) {
+        setMangas([]);
+        return;
+      }
       // Gunakan limit untuk mengurangi jumlah data yang diambil sekaligus
       // dan orderBy untuk memastikan data yang paling relevan ditampilkan lebih dulu
       const mangaQuery = query(

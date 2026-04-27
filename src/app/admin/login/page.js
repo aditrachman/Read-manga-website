@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/app/lib/firebase";
+import { auth, firebaseReady } from "@/app/lib/firebase";
 
 export default function AdminLogin() {
   const router = useRouter();
@@ -37,6 +37,12 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
+      if (!firebaseReady || !auth) {
+        setError(
+          "Firebase belum siap. Cek konfigurasi .env.local atau aktifkan Firebase Auth di project."
+        );
+        return;
+      }
       // Login with Firebase Authentication
       const userCredential = await signInWithEmailAndPassword(
         auth,

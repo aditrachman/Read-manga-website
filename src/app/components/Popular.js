@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
-import { db } from "@/app/lib/firebase";
+import { db, firebaseReady } from "@/app/lib/firebase";
 
 export default function Popular() {
     const [mangas, setMangas] = useState([]);
@@ -15,6 +15,11 @@ export default function Popular() {
     useEffect(() => {
         const fetchMangas = async () => {
             try {
+                if (!firebaseReady || !db) {
+                    setMangas([]);
+                    setLoading(false);
+                    return;
+                }
                 const mangaRef = collection(db, "manga");
                 const q = query(mangaRef, orderBy("popularity", "asc"), limit(6));
                 const querySnapshot = await getDocs(q);

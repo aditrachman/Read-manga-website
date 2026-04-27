@@ -17,7 +17,7 @@ import {
   where,
   getCountFromServer,
 } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { db, firebaseReady } from "../lib/firebase";
 
 export default function Navbar() {
   const router = useRouter();
@@ -79,6 +79,11 @@ export default function Navbar() {
   // Implementasi fungsi pencarian dengan jumlah chapter
   const searchManga = async (term) => {
     try {
+      if (!firebaseReady || !db) {
+        setSearchResults([]);
+        setShowResults(false);
+        return;
+      }
       // Normalisasi search term untuk pencarian
       const searchTermLower = term.toLowerCase();
       const results = [];

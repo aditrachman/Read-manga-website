@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { ChevronRightIcon } from "@heroicons/react/20/solid";
 import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
-import { db } from "@/app/lib/firebase"; // Assuming you have a firebase config file
+import { db, firebaseReady } from "@/app/lib/firebase"; // Assuming you have a firebase config file
 
 export default function Hero() {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -31,6 +31,9 @@ export default function Hero() {
   useEffect(() => {
     const fetchMangas = async () => {
       try {
+        if (!firebaseReady || !db) {
+          throw new Error("Firebase not ready");
+        }
         const mangaRef = collection(db, "manga");
         const q = query(mangaRef, orderBy("rating", "desc"), limit(3)); // Limit to 3 for performance
         const querySnapshot = await getDocs(q);

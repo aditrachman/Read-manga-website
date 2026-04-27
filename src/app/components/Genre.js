@@ -9,7 +9,7 @@ import {
   limit,
   orderBy,
 } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { db, firebaseReady } from "../lib/firebase";
 
 // Memoized GenreCard component with improved design
 const GenreCard = memo(({ genre, index }) => {
@@ -87,6 +87,10 @@ export default function Genre() {
   const fetchGenres = useCallback(async () => {
     try {
       setIsLoading(true);
+      if (!firebaseReady || !db) {
+        setGenres([]);
+        return;
+      }
 
       // Object to store genres and their count
       const genreCounts = {};
