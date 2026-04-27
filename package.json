@@ -11,10 +11,10 @@
   "dependencies": {
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",
-    "@vercel/analytics": "^1.5.0",
+    "@vercel/analytics": "^1.1.4",
     "critters": "^0.0.23",
     "firebase": "^11.4.0",
-    "next": "^15.5.2",
+    "next": "^16.2.4",
     "next-seo": "^6.6.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
