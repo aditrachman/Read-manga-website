@@ -22,12 +22,31 @@ export default function AddChapter() {
   const [manga, setManga] = useState(null);
   const [loading, setLoading] = useState(false);
   const [chapterImages, setChapterImages] = useState([{ url: "" }]);
+  const [bulkUrlsText, setBulkUrlsText] = useState("");
   const [nextChapterNumber, setNextChapterNumber] = useState(1);
   
   const [chapter, setChapter] = useState({
     title: "",
     chapterNumber: 1,
   });
+
+  const parseUrlsFromText = (text) => {
+    return text
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => line.replace(/^\d+\.\s*/, ""))
+      .filter((line) => /^https?:\/\//i.test(line));
+  };
+
+  const importBulkUrls = () => {
+    const urls = parseUrlsFromText(bulkUrlsText);
+    if (urls.length === 0) {
+      alert("Tidak ada URL valid. Pastikan tiap baris berisi URL (http/https).");
+      return;
+    }
+    setChapterImages(urls.map((url) => ({ url })));
+  };
 
   useEffect(() => {
     if (mangaId) {
@@ -246,6 +265,35 @@ export default function AddChapter() {
             </button>
           </div>
 
+          <div className="bg-gray-800/40 border border-gray-700 rounded-lg p-3">
+            <p className="text-sm font-medium mb-2">
+              Paste banyak URL (1 baris 1 URL)
+            </p>
+            <textarea
+              value={bulkUrlsText}
+              onChange={(e) => setBulkUrlsText(e.target.value)}
+              rows={6}
+              placeholder={`Contoh:\nhttps://img.komiku.org/uploads4/2914137-1.jpg\nhttps://img.komiku.org/uploads4/2914137-2_part1.jpg\nhttps://img.komiku.org/uploads4/2914137-2_part2.jpg`}
+              className="w-full p-2 bg-gray-900 border border-gray-700 rounded-md font-mono text-xs"
+            />
+            <div className="flex gap-2 mt-2">
+              <button
+                type="button"
+                onClick={importBulkUrls}
+                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-md text-sm"
+              >
+                Import URL
+              </button>
+              <button
+                type="button"
+                onClick={() => setBulkUrlsText("")}
+                className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-md text-sm"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+
           {chapterImages.map((image, index) => (
             <div key={index} className="flex gap-2">
               <input
@@ -279,6 +327,8 @@ export default function AddChapter() {
                       <img
                         src={image.url}
                         alt={`Page ${index + 1}`}
+                        referrerPolicy="no-referrer"
+                        crossOrigin="anonymous"
                         className="h-32 object-cover rounded-md w-full"
                         onError={(e) => {
                           e.target.onerror = null;

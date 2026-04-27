@@ -60,7 +60,7 @@ export default function BulkImportChapter() {
         querySnapshot.forEach((doc) => {
           chapters.push(doc.data());
         });
-        
+
         const maxChapter = Math.max(...chapters.map(ch => ch.chapterNumber || 0));
         nextNumber = maxChapter + 1;
       }
@@ -97,7 +97,7 @@ export default function BulkImportChapter() {
       const jsonUrls = parseJsonData(text);
       if (jsonUrls.length > 0) return jsonUrls;
     }
-    
+
     // Fallback to URL list
     return parseUrlList(text);
   };
@@ -171,14 +171,14 @@ export default function BulkImportChapter() {
     try {
       // Split by double newlines to separate chapters
       const chapters = bulkData.split('\n\n').filter(chapter => chapter.trim());
-      
+
       for (let i = 0; i < chapters.length; i++) {
         const chapterData = chapters[i];
         const imageUrls = autoDetectFormat(chapterData);
-        
+
         if (imageUrls.length > 0) {
           const chapterNumber = startChapter + i;
-          
+
           await addDoc(collection(db, "chapters"), {
             mangaId: mangaId,
             mangaTitle: manga.title,
@@ -252,13 +252,13 @@ export default function BulkImportChapter() {
 
       {/* Instructions */}
       <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 mb-6">
-        <h3 className="text-lg font-bold mb-2">📖 How to Use:</h3>
+        <h3 className="text-lg font-bold mb-2">📖 Cara Menggunakan bulk Import:</h3>
         <ol className="list-decimal list-inside space-y-1 text-sm">
-          <li>Go to manga reading website and open chapter</li>
-          <li>Open browser console (F12)</li>
-          <li>Paste the extractor script from <code>/manga-extractor.js</code></li>
-          <li>Copy the extracted URLs and paste them below</li>
-          <li>Click "Import Chapter" to save</li>
+          <li>Pergi ke website Penyedia layanan manga dan buka salah satu chapter nya </li>
+          <li>Lalu buka Inspect element (F12)</li>
+          <li>Pastekan script ke dalam <code>/manga-extractor.js</code> Console </li>
+          <li>Lalu keluar dari Console dan akan terlihat alat bantu</li>
+          <li>Click "Copy All" Untuk save untuk format url atau "Json" untuk format json</li>
         </ol>
       </div>
 
@@ -333,11 +333,11 @@ Chapter 2 URLs...`}
           <div className="bg-gray-800 rounded-lg p-4">
             <h3 className="font-bold mb-2">Preview:</h3>
             <p className="text-sm text-gray-400">
-              {importMode === "auto-detect" 
+              {importMode === "auto-detect"
                 ? `Auto-detected ${autoDetectFormat(bulkData).length} images`
                 : importMode === "urls"
-                ? `Found ${parseUrlList(bulkData).length} URLs`
-                : `JSON contains ${parseJsonData(bulkData).length} images`
+                  ? `Found ${parseUrlList(bulkData).length} URLs`
+                  : `JSON contains ${parseJsonData(bulkData).length} images`
               }
             </p>
           </div>
@@ -352,7 +352,7 @@ Chapter 2 URLs...`}
           >
             {loading ? "Importing..." : "Import Single Chapter"}
           </button>
-          
+
           <button
             onClick={processMultipleChapters}
             disabled={loading || !bulkData.trim()}

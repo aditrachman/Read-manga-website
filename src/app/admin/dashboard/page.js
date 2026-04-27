@@ -1,6 +1,6 @@
 // /app/admin/dashboard/page.js
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getCurrentUser, logoutUser } from "@/app/lib/auth";
@@ -27,6 +27,45 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(null);
 
+  const fetchStats = useCallback(async () => {
+    try {
+      // Fetch manga count
+      const mangaRef = collection(db, "manga");
+      const mangaSnap = await getDocs(mangaRef);
+
+      // Fetch recent manga
+      const recentMangaQuery = query(
+        mangaRef,
+        orderBy("updatedAt", "desc"),
+        limit(5)
+      );
+      const recentMangaSnap = await getDocs(recentMangaQuery);
+      const recentMangaList = [];
+
+      recentMangaSnap.forEach((doc) => {
+        recentMangaList.push({
+          id: doc.id,
+          ...doc.data(),
+        });
+      });
+
+      // Fetch chapters count
+      const chaptersRef = collection(db, "chapters");
+      const chaptersSnap = await getDocs(chaptersRef);
+
+      setStats({
+        totalManga: mangaSnap.size,
+        totalChapters: chaptersSnap.size,
+      });
+
+      setRecentManga(recentMangaList);
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     const loadUser = async () => {
       const currentUser = await getCurrentUser();
@@ -38,48 +77,9 @@ export default function AdminDashboard() {
       }
     };
 
-    const fetchStats = async () => {
-      try {
-        // Fetch manga count
-        const mangaRef = collection(db, "manga");
-        const mangaSnap = await getDocs(mangaRef);
-
-        // Fetch recent manga
-        const recentMangaQuery = query(
-          mangaRef,
-          orderBy("updatedAt", "desc"),
-          limit(5)
-        );
-        const recentMangaSnap = await getDocs(recentMangaQuery);
-        const recentMangaList = [];
-
-        recentMangaSnap.forEach((doc) => {
-          recentMangaList.push({
-            id: doc.id,
-            ...doc.data(),
-          });
-        });
-
-        // Fetch chapters count
-        const chaptersRef = collection(db, "chapters");
-        const chaptersSnap = await getDocs(chaptersRef);
-
-        setStats({
-          totalManga: mangaSnap.size,
-          totalChapters: chaptersSnap.size,
-        });
-
-        setRecentManga(recentMangaList);
-      } catch (error) {
-        console.error("Error fetching stats:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadUser();
     fetchStats();
-  }, [router]);
+  }, [router, fetchStats]);
 
   const handleLogout = async () => {
     if (!confirm("Apakah Anda yakin ingin logout?")) {
@@ -211,7 +211,7 @@ export default function AdminDashboard() {
                     <td className="py-3 pr-6">{manga.chapters}</td>
                     <td className="py-3 pr-6">{manga.rating}</td>
                     <td className="py-3 pr-6">
-                      {manga.updatedAt?.toDate().toLocaleDateString()}
+                      {manga.updatedAt?.toDate?.()?.toLocaleDateString?.() || "N/A"}
                     </td>
                     <td className="py-3">
                       <div className="flex gap-2">

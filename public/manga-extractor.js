@@ -1,13 +1,13 @@
 // Manga Chapter Image Extractor
 // Paste this script in browser console on manga reading page
 
-(function() {
+(function () {
   'use strict';
-  
+
   // Common selectors for manga reading sites
   const imageSelectors = [
     'img[src*="jpg"]',
-    'img[src*="jpeg"]', 
+    'img[src*="jpeg"]',
     'img[src*="png"]',
     'img[src*="webp"]',
     '.chapter-image img',
@@ -19,10 +19,10 @@
     '[class*="page"] img',
     '[id*="page"] img'
   ];
-  
+
   function extractChapterImages() {
     const images = [];
-    
+
     // Try each selector
     imageSelectors.forEach(selector => {
       const elements = document.querySelectorAll(selector);
@@ -36,40 +36,40 @@
         }
       });
     });
-    
+
     // Remove duplicates and sort
     const uniqueImages = [...new Set(images)];
-    
+
     return uniqueImages;
   }
-  
+
   function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {
       console.log('✅ URLs copied to clipboard!');
     });
   }
-  
+
   function displayResults(images) {
     console.log(`🎯 Found ${images.length} chapter images:`);
-    
+
     // Format for easy copy-paste
     const formattedUrls = images.map((url, index) => `${index + 1}. ${url}`).join('\n');
-    
+
     console.log('\n📋 Copy these URLs:');
     console.log(formattedUrls);
-    
+
     // Auto copy to clipboard
     copyToClipboard(images.join('\n'));
-    
+
     // Create floating UI
     createFloatingUI(images);
   }
-  
+
   function createFloatingUI(images) {
     // Remove existing UI
     const existing = document.getElementById('manga-extractor-ui');
     if (existing) existing.remove();
-    
+
     // Create floating panel
     const panel = document.createElement('div');
     panel.id = 'manga-extractor-ui';
@@ -89,7 +89,7 @@
       font-size: 12px;
       overflow-y: auto;
     `;
-    
+
     panel.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <h3 style="margin: 0; color: #60a5fa;">📸 Chapter Images (${images.length})</h3>
@@ -110,15 +110,15 @@
         `).join('')}
       </div>
     `;
-    
+
     document.body.appendChild(panel);
-    
+
     // Add event listeners
     document.getElementById('copy-all-btn').onclick = () => {
       copyToClipboard(images.join('\n'));
       alert('✅ All URLs copied!');
     };
-    
+
     document.getElementById('download-json-btn').onclick = () => {
       const data = {
         title: document.title,
@@ -126,7 +126,7 @@
         images: images,
         extractedAt: new Date().toISOString()
       };
-      
+
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -136,19 +136,19 @@
       URL.revokeObjectURL(url);
     };
   }
-  
+
   // Main execution
-  console.log('🚀 Starting Manga Chapter Image Extraction...');
-  
+  console.log('🚀 Mulai pembajakan cdn gambar nya ngenggg...');
+
   // Wait for images to load
   setTimeout(() => {
     const images = extractChapterImages();
-    
+
     if (images.length > 0) {
       displayResults(images);
     } else {
-      console.log('❌ No chapter images found. Try scrolling down or waiting for images to load.');
-      
+      console.log('❌ Gambar tidak di temukan.');
+
       // Try again after scroll
       window.scrollTo(0, document.body.scrollHeight);
       setTimeout(() => {
@@ -156,12 +156,12 @@
         if (retryImages.length > 0) {
           displayResults(retryImages);
         } else {
-          console.log('❌ Still no images found. This site might use a different structure.');
+          console.log('❌ Gambar masih belum ditemukan, coba cari struktur yang lain.');
         }
       }, 2000);
     }
   }, 1000);
-  
+
 })();
 
-console.log('📖 Manga Image Extractor loaded! The script will run automatically.');
+console.log('📖 Manga langsungan udah jalan close aja console nya langung liat di halamannya.');

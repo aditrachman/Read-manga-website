@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { ChevronRightIcon } from "@heroicons/react/20/solid";
 import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { db } from "@/app/lib/firebase"; // Assuming you have a firebase config file
@@ -46,7 +47,8 @@ export default function Hero() {
             genre: Array.isArray(data.genre)
               ? data.genre.slice(0, 2).join(", ")
               : "Unknown",
-            chapter: `Chapter ${data.chapters || 0}`,
+            chapterCount: Number(data.chapters || 0),
+            chapterLabel: `Chapter ${data.chapters || 0}`,
           };
         });
 
@@ -63,7 +65,8 @@ export default function Hero() {
             rating: "4.9",
             description: "Popular 1",
             genre: "Action, Fantasy",
-            chapter: "Chapter 179",
+            chapterCount: 179,
+            chapterLabel: "Chapter 179",
           },
           {
             id: 2,
@@ -72,7 +75,8 @@ export default function Hero() {
             rating: "4.8",
             description: "Popular 2",
             genre: "Adventure, Fantasy",
-            chapter: "Chapter 1085",
+            chapterCount: 1085,
+            chapterLabel: "Chapter 1085",
           },
           {
             id: 3,
@@ -81,7 +85,8 @@ export default function Hero() {
             rating: "4.7",
             description: "Popular 3",
             genre: "Action, Adventure",
-            chapter: "Chapter 700",
+            chapterCount: 700,
+            chapterLabel: "Chapter 700",
           },
         ]);
         setLoading(false);
@@ -225,12 +230,31 @@ export default function Hero() {
 
         {/* Buttons */}
         <div className="mt-4 md:mt-6 flex justify-center md:justify-start space-x-4">
-          <button className="rounded-md bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:opacity-80 hover:scale-105">
+          <Link
+            href="/manga"
+            className="rounded-md bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:opacity-80 hover:scale-105"
+          >
             Jelajahi
-          </button>
-          <button className="border border-gray-400 px-6 py-3 text-sm font-semibold text-white rounded-md hover:bg-gray-800 transition-all">
+          </Link>
+          <Link
+            href="/genre"
+            className="border border-gray-400 px-6 py-3 text-sm font-semibold text-white rounded-md hover:bg-gray-800 transition-all"
+          >
             Genre
-          </button>
+          </Link>
+        </div>
+        <div className="mt-3 flex justify-center md:justify-start gap-3 text-sm">
+          <Link href="/manga" className="text-indigo-300 hover:underline">
+            All Manga
+          </Link>
+          <span className="text-gray-500">•</span>
+          <Link href="/genre" className="text-indigo-300 hover:underline">
+            Genre
+          </Link>
+          <span className="text-gray-500">•</span>
+          <Link href="/recommendation" className="text-indigo-300 hover:underline">
+            Recommendation
+          </Link>
         </div>
       </div>
 
@@ -259,7 +283,7 @@ export default function Hero() {
 
             {/* Badge in top right corner */}
             <div className="absolute top-4 right-4 bg-purple-600/90 px-3 py-1 rounded-full text-xs font-bold">
-              {currentCard.chapter}
+              {currentCard.chapterLabel}
             </div>
 
             {/* Genre tags */}
@@ -288,12 +312,22 @@ export default function Hero() {
 
               {/* Buttons with more modern design */}
               <div className="flex space-x-3">
-                <button className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 text-sm rounded-lg hover:shadow-purple-500/30 hover:shadow-lg transition-all duration-300 font-medium">
+                <Link
+                  href={
+                    currentCard.chapterCount > 0
+                      ? `/manga/${currentCard.id}/chapter/1`
+                      : `/manga/${currentCard.id}`
+                  }
+                  className="flex-1 text-center bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 text-sm rounded-lg hover:shadow-purple-500/30 hover:shadow-lg transition-all duration-300 font-medium"
+                >
                   Baca sekarang
-                </button>
-                <button className="flex-1 bg-gray-800/70 backdrop-blur-sm border border-gray-700 text-white py-3 text-sm rounded-lg hover:bg-gray-700 transition-all duration-300 font-medium">
-                  Bookmarks
-                </button>
+                </Link>
+                <Link
+                  href={`/manga/${currentCard.id}`}
+                  className="flex-1 text-center bg-gray-800/70 backdrop-blur-sm border border-gray-700 text-white py-3 text-sm rounded-lg hover:bg-gray-700 transition-all duration-300 font-medium"
+                >
+                  Detail
+                </Link>
               </div>
             </div>
           </div>

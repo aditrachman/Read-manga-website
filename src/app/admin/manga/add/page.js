@@ -16,9 +16,56 @@ export default function AddManga() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [coverURL, setCoverURL] = useState("");
   const [chapterImages, setChapterImages] = useState([{ url: "" }]);
+  const [bulkChapterUrlsText, setBulkChapterUrlsText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [selectedManga, setSelectedManga] = useState(null);
+
+  const normalizeMALImageUrl = (url) => {
+    if (!url || typeof url !== "string") return "";
+    // Jikan often returns myanimelist.net; cdn.myanimelist.net tends to be more reliable for hotlinking
+    return url.replace(
+      /^https:\/\/myanimelist\.net\/images\//,
+      "https://cdn.myanimelist.net/images/"
+    );
+  };
+
+  const getCoverUrl = (m) => {
+    if (!m) return "";
+    const url =
+      m.images?.webp?.large_image_url ||
+      m.images?.jpg?.large_image_url ||
+      m.images?.webp?.image_url ||
+      m.images?.jpg?.image_url ||
+      "";
+    return normalizeMALImageUrl(url);
+  };
+
+  const parseUrlsFromText = (text) => {
+    return text
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => line.replace(/^\d+\.\s*/, "")) // allow "1. https://..."
+      .filter((line) => /^https?:\/\//i.test(line));
+  };
+
+  const parsedBulkPreviewUrls = parseUrlsFromText(bulkChapterUrlsText);
+  const hasImportedUrls = chapterImages.some((image) => image.url?.trim());
+  const previewImageUrls = hasImportedUrls
+    ? chapterImages
+        .map((image) => image.url?.trim())
+        .filter(Boolean)
+    : parsedBulkPreviewUrls;
+
+  const importBulkChapterUrls = () => {
+    const urls = parseUrlsFromText(bulkChapterUrlsText);
+    if (urls.length === 0) {
+      alert("Tidak ada URL valid. Pastikan tiap baris berisi URL (http/https).");
+      return;
+    }
+    setChapterImages(urls.map((url) => ({ url })));
+  };
 
   const [manga, setManga] = useState({
     title: "",
@@ -45,10 +92,13 @@ export default function AddManga() {
 
     try {
       const response = await fetch(
-        `https://api.jikan.moe/v4/manga?q=${encodeURIComponent(searchQuery)}`
+        `https://api.jikan.moe/v4/manga?q=${encodeURIComponent(searchQuery)}&limit=10`
       );
       
       if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error("RATE_LIMIT");
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
@@ -65,7 +115,11 @@ export default function AddManga() {
       }
     } catch (error) {
       console.error("Error searching manga:", error);
-      alert("Terjadi kesalahan saat mencari manga. Silakan coba lagi.");
+      if (error?.message === "RATE_LIMIT") {
+        alert("Kena rate limit dari Jikan/MAL. Tunggu 3-10 detik lalu coba lagi.");
+      } else {
+        alert("Terjadi kesalahan saat mencari manga. Silakan coba lagi.");
+      }
     } finally {
       setSearchLoading(false);
     }
@@ -98,7 +152,7 @@ export default function AddManga() {
       popularity: selectedData.popularity || 0,
     });
 
-    setCoverURL(selectedData.images?.jpg?.image_url || "");
+    setCoverURL(getCoverUrl(selectedData));
 
     // Clear search results after selection
     setSearchResults([]);
@@ -247,7 +301,12 @@ export default function AddManga() {
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Masukkan judul manga"
             className="flex-grow p-2 bg-gray-800 border border-gray-700 rounded-md"
-            onKeyPress={(e) => e.key === "Enter" && searchManga()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                searchManga();
+              }
+            }}
           />
           <button
             type="button"
@@ -272,11 +331,17 @@ export default function AddManga() {
                   className="flex gap-3 p-3 bg-gray-800 border border-gray-700 rounded-lg cursor-pointer hover:bg-gray-750"
                   onClick={() => selectManga(result)}
                 >
-                  {result.images?.jpg?.image_url && (
+                  {getCoverUrl(result) && (
                     <img
-                      src={result.images.jpg.image_url}
+                      src={getCoverUrl(result)}
                       alt={result.title}
+                      referrerPolicy="no-referrer"
+                      crossOrigin="anonymous"
                       className="h-24 w-16 object-cover rounded"
+                      onError={(e) => {
+                        e.currentTarget.src =
+                          "https://via.placeholder.com/150?text=Cover+Blocked";
+                      }}
                     />
                   )}
                   <div>
@@ -300,11 +365,17 @@ export default function AddManga() {
         {selectedManga && (
           <div className="mt-4 p-3 bg-gray-800 border border-indigo-500 rounded-lg">
             <div className="flex gap-4">
-              {selectedManga.images?.jpg?.image_url && (
+              {getCoverUrl(selectedManga) && (
                 <img
-                  src={selectedManga.images.jpg.image_url}
+                  src={getCoverUrl(selectedManga)}
                   alt={selectedManga.title}
+                  referrerPolicy="no-referrer"
+                  crossOrigin="anonymous"
                   className="h-32 w-24 object-cover rounded"
+                  onError={(e) => {
+                    e.currentTarget.src =
+                      "https://via.placeholder.com/150?text=Cover+Blocked";
+                  }}
                 />
               )}
               <div>
@@ -313,6 +384,11 @@ export default function AddManga() {
                   {selectedManga.authors?.map((a) => a.name).join(", ") ||
                     "Unknown author"}
                 </p>
+                {coverURL && (
+                  <p className="text-xs text-gray-500 mt-1 break-all">
+                    Cover URL: {coverURL}
+                  </p>
+                )}
                 <div className="flex flex-wrap gap-1 mt-2">
                   {selectedManga.genres?.map((genre) => (
                     <span
@@ -445,6 +521,8 @@ export default function AddManga() {
                   <img
                     src={coverURL}
                     alt="Cover preview"
+                    referrerPolicy="no-referrer"
+                    crossOrigin="anonymous"
                     className="h-40 object-cover rounded-md"
                     onError={(e) => {
                       e.target.onerror = null;
@@ -505,6 +583,41 @@ export default function AddManga() {
             </button>
           </div>
 
+          <div className="bg-gray-800/40 border border-gray-700 rounded-lg p-3">
+            <p className="text-sm font-medium mb-2">
+              Paste banyak URL (1 baris 1 URL)
+            </p>
+            <textarea
+              value={bulkChapterUrlsText}
+              onChange={(e) => setBulkChapterUrlsText(e.target.value)}
+              rows={5}
+              placeholder={`Contoh:\nhttps://img.komiku.org/uploads4/2914137-1.jpg\nhttps://img.komiku.org/uploads4/2914137-2_part1.jpg\nhttps://img.komiku.org/uploads4/2914137-2_part2.jpg`}
+              className="w-full p-2 bg-gray-900 border border-gray-700 rounded-md font-mono text-xs"
+            />
+            <div className="flex gap-2 mt-2">
+              <button
+                type="button"
+                onClick={importBulkChapterUrls}
+                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-md text-sm"
+              >
+                Import URL
+              </button>
+              <button
+                type="button"
+                onClick={() => setBulkChapterUrlsText("")}
+                className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-md text-sm"
+              >
+                Clear
+              </button>
+            </div>
+            {parsedBulkPreviewUrls.length > 0 && (
+              <p className="text-xs text-gray-400 mt-2">
+                Terdeteksi {parsedBulkPreviewUrls.length} URL valid
+                {!hasImportedUrls ? " (preview langsung aktif)" : ""}
+              </p>
+            )}
+          </div>
+
           {chapterImages.map((image, index) => (
             <div key={index} className="flex gap-2">
               <input
@@ -529,13 +642,15 @@ export default function AddManga() {
           <div className="mt-4">
             <p className="text-sm mb-2">Preview Halaman:</p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              {chapterImages.map(
-                (image, index) =>
-                  image.url && (
+              {previewImageUrls.map(
+                (imageUrl, index) =>
+                  imageUrl && (
                     <div key={index} className="relative">
                       <img
-                        src={image.url}
+                        src={imageUrl}
                         alt={`Page ${index + 1}`}
+                        referrerPolicy="no-referrer"
+                        crossOrigin="anonymous"
                         className="h-32 object-cover rounded-md w-full"
                         onError={(e) => {
                           e.target.onerror = null;

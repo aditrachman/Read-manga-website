@@ -62,7 +62,7 @@ html {
   }
 }
 
-/* Manga reader specific styles - scoped to avoid conflicts */
+/* Manga reader specific styles - optimized for reading */
 :root {
   --manga-spacing: 0px;
 }
@@ -73,7 +73,7 @@ html {
   gap: var(--manga-spacing);
 }
 
-.manga-reader > img {
+.manga-reader img {
   width: 100% !important;
   height: auto !important;
   display: block !important;
@@ -83,9 +83,28 @@ html {
   outline: none !important;
   vertical-align: top !important;
   object-fit: contain !important;
-  max-width: none !important;
+  max-width: 100% !important;
   aspect-ratio: unset !important;
   box-sizing: border-box !important;
+}
+
+/* Responsive manga reader */
+@media (max-width: 640px) {
+  .manga-reader {
+    max-width: 100%;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .manga-reader {
+    max-width: 90%;
+  }
+}
+
+@media (min-width: 1025px) {
+  .manga-reader {
+    max-width: 768px; /* max-w-3xl equivalent */
+  }
 }
 
 :root {
@@ -104,5 +123,4 @@ body {
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
-  font-family: theme("fontFamily.inter");
 }

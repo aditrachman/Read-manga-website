@@ -257,6 +257,8 @@ export default function EditChapter() {
                       <img
                         src={image.url}
                         alt={`Page ${index + 1}`}
+                        referrerPolicy="no-referrer"
+                        crossOrigin="anonymous"
                         className="h-32 object-cover rounded-md w-full"
                         onError={(e) => {
                           e.target.onerror = null;

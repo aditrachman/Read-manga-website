@@ -81,7 +81,7 @@ export default function MangaDetail() {
     setDeleting(chapterId);
     try {
       await deleteDoc(doc(db, "chapters", chapterId));
-      
+
       // Update chapter count in manga
       const newChapterCount = chapters.length - 1;
       await updateDoc(doc(db, "manga", mangaId), {
@@ -107,7 +107,7 @@ export default function MangaDetail() {
     setDeletingManga(true);
     try {
       // 1. Hapus semua chapters
-      const deletePromises = chapters.map(chapter => 
+      const deletePromises = chapters.map(chapter =>
         deleteDoc(doc(db, "chapters", chapter.id))
       );
       await Promise.all(deletePromises);
@@ -116,7 +116,7 @@ export default function MangaDetail() {
       await deleteDoc(doc(db, "manga", mangaId));
 
       alert(`✅ Manga "${manga.title}" dan ${chapters.length} chapter berhasil dihapus!`);
-      
+
       // 3. Redirect ke dashboard
       router.push("/admin/dashboard");
     } catch (error) {
@@ -196,10 +196,10 @@ export default function MangaDetail() {
             />
           )}
         </div>
-        
+
         <div className="md:col-span-2 space-y-4">
           <h2 className="text-3xl font-bold">{manga.title}</h2>
-          
+
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-gray-400">Author:</span>
