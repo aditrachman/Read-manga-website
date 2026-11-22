@@ -1,4 +1,4 @@
-# 📚 Moco Manga  
+# 📚 Moco Manga
 
 > Website baca manga, manhwa, dan manhua terlengkap — gratis, tanpa iklan, dengan admin panel yang lengkap.
 
